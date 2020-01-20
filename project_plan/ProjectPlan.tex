@@ -7,7 +7,11 @@
 \setlength{\textwidth}{6.30in}
 \setlength{\textheight}{9.0in}
 
+\usepackage{longtable}
+\usepackage{array}
 \usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
 \graphicspath{ {./img/} }
 
 \bibliographystyle{unsrt}
@@ -107,6 +111,42 @@ To summarize the requirements:
 \end{itemize}
 
 \section*{Risk Assessment}
+
+\bgroup
+\def\arraystretch{2}
+\begin{table}[H]
+\centering
+\begin{tabular}{|m{0.4\textwidth}|m{0.4\textwidth}|m{0.1\textwidth}|}
+\hline
+\textbf{Risk} & \textbf{Mitigation}                       & \textbf{Level} \\ \hline
+\begin{itemize}[leftmargin=*]
+  \item Ethereum doesn't meet my needs
+  \item I face a block relating to knowledge of Ehtereum effectively stopping me from reaching my goals.
+\end{itemize} &
+\begin{itemize}[leftmargin=*]
+  \item Switch to an implementation that I am more familiar with, although with slightly different tradebacks, that is, Hyperledger Fabric.
+\end{itemize} &
+Medium \\ \hline
+\begin{itemize}[leftmargin=*]
+  \item Ethereum doesn't meet my needs
+  \item I face a block relating to knowledge of Ehtereum effectively stopping me from reaching my goals.
+\end{itemize} &
+\begin{itemize}[leftmargin=*]
+  \item Switch to an implementation that I am more familiar with, although with slightly different tradebacks, that is, Hyperledger Fabric.
+\end{itemize} &
+Low \\ \hline
+\begin{itemize}[leftmargin=*]
+  \item Unexpected hardware failure or theft.
+  \item Any hazards resulting from the natural wear and tear of utilized hardware
+\end{itemize} &
+\begin{itemize}[leftmargin=*]
+  \item All code, documentation and report will be frequently backed up and versioned using git (and thus, uploaded to GitHub), allowing for data recovery.
+  \item If LoRaWAN gateway or other IoT equipment was to become faulty or infeasible, focus on virtualised solutions.
+\end{itemize} &
+Low \\ \hline
+\end{tabular}
+\end{table}
+\egroup
 
 Try to describe possible circumstances (e.g. a particular piece of
 technology doesn't work or is too expensive) that might cause
