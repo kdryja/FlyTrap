@@ -43,17 +43,30 @@ Common implementation of MQTT brokers includes basic authentication based on a u
 
 I would like to propose a universal, pluggable module following the description of MQTT standard (and thus potentially making it independent from the used MQTT implementation) handling Authentication, Authorization and Accountability of IoT devices and consumers attempting connection to the brokers. In order to make the platform more resilient and independent from single points of failure (often being the central ACL repository), I will deploy it on a blockchain - which by convention supports recording of transactions (by recording them on the blockchain) and authentication via ID of the presented wallet. I will also be aiming to merge the efforts of Aberdeen's scientist into the project, enhancing trust of captured data.
 
+Preliminary research revealed similar efforts by scientist in Khon Kaen University~\cite{8523942}, although focusing mostly on Hyperledger Fabric and optimization of the configuration through Genetic Algorithms. The paper doesn't make any mention of logging and provenance functionality, which I would like to put more attention towards - along with focusing on Ethereum platform instead.
+
 
 \section*{Goals}
 
-This section should describe the the main goals of your project.
-In other words, describe {\em what} it is that you want to do.
-Are you building a tool or an application? What functionality 
-already exists, and what will you have to do yourself?
+The project can be divided onto main goals and extras, leaving some field for maneuvering in case of road blocks or difficulties resulting from the challenges faced in the dissertation. By having flexible targets, I will be able to stop sooner in case of overestimating the schedule, or carrying on with extra work, should I find myself meeting the targets quicker than expected. Moreover, I would like to also put some attention to listing the things that the project is \textbf{not} trying to be, to avoid sidetracking.
 
-Try to make it clear which goals are central to your project, and which
-might be optional extras. Try to be realistic about making your
-goals {\em achievable.}
+\paragraph{Main Goals:}
+\begin{itemize}
+  \item Design Blockchain network and deploy on Ethereum platform, capable of recording transactions and allowing for modification of ACLs, i.e. which wallet ID is permitted to access given topics.
+  \item Design containerised software acting as a secure proxy between brokers and connecting clients.
+  \item Deploy and test on at least one MQTT implementation (e.g. Moquette, Mosquitto), simulated with software.
+\end{itemize}
+
+\paragraph{Extra Goals:}
+\begin{itemize}
+  \item Explore and implement implementation of the architecture to any, arbitrary broker.
+  \item Connect physical LoRaWAN gateways to the software.
+\end{itemize}
+
+\paragraph{No-goals:}
+\begin{itemize}
+  \item Design a new blockchain platform from scratch.
+\end{itemize}
 
 
 \section*{Methodology}
@@ -76,10 +89,22 @@ of what would be appropriate for your specific project.
 
 \section*{Resources Required}
 
-You should mention here the hardware and software resources you will
-require. Even if it seems obvious that you might only need Java and a PC, 
-you should still say so!
+For the purposes of the project, laptop and a workstation should be sufficient, as the MQTT brokers can be simulated via software, without the need of physical IoT devices sending the messages. For the second stage of the project, I will be considering putting the software on a physical LoRaWAN gateway, enhancing the current broker implementation. TrustLens team from University of Aberdeen recently acquired such gateway, which I will be able to use given the need. Moreover, the team also owns several PuckJS sensors and Arduino boards, which would allow to deploy the whole system and test its behaviour in the real world.
 
+To summarize the requirements:
+\begin{itemize}
+  \item Linux PC with the following software: 
+    \begin{itemize}
+      \item Golang 1.12+ 
+      \item Docker 19.03.5+
+      \item Suitable code editor (Vim)
+    \end{itemize}
+  \item Additionally, for tests in the field:
+    \begin{itemize}
+      \item LoRaWAN Gateway
+      \item IoT sensors (PuckJS, Arduino) 
+    \end{itemize}
+\end{itemize}
 
 \section*{Risk Assessment}
 
