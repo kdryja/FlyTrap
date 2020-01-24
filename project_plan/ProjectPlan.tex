@@ -41,7 +41,7 @@ Sensitive personal data (as defined by GDPR\cite{EUdataregulations2018}, for exa
 
 What is more, those devices frequently do not directly communicate on a peer-to-peer basis, but instead pass through intermediary resource handling the distribution of data. MQTT Brokers\footnote{\url{https://mqtt.org/}} are one of them, providing a Publisher/Subscriber architecture, allowing for information exchange without the constant need of interconnectivity between clients, instead of relying on created topics used as a relay. It's very important to point out that MQTT is not a piece of software, but rather a standard describing the operation of such backend and leaves the implementation up to end-users - the implementation is very often referred as MQTT Brokers.
 
-The documentation also clearly states that the security is not part of the standard, but rather leaves this decision up to the implementors, offering several alternatives\footnote{\url{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901261}}. And while the transport of data can be assumed to remain secure (as MQTT operates over TCP/IP, thus encrypting the data using TLS), the access is often not. For example, an attack could be conducted, where malicious device communicates with the broker, impersonating another IoT hardware, in process registering for secure topic (e.g. where heart rate is being published by the smart pacemaker, normally restricted only for health authorities) and intercepting the data.
+The documentation also clearly states that the security is not part of the standard, but rather leaves this decision up to the implementors\footnote{\url{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901261}}. And while the transport of data can be assumed to remain secure (as MQTT operates over TCP/IP, thus encrypting the data using TLS), the access is often not. For example, an attack could be conducted, where malicious device communicates with the broker, impersonating another IoT hardware, in process registering for secure topic (e.g. where heart rate is being published by the smart pacemaker, normally restricted only for health authorities) and intercepting the data.
 
 \begin{figure}[ht]
   \centering
@@ -49,7 +49,7 @@ The documentation also clearly states that the security is not part of the stand
   \caption{Proposed architecture}\label{fig:iot1}
 \end{figure}
 
-Common implementation of MQTT brokers includes basic authentication based on a username and a secret password, offering limited to no logging or auditing of operations performed on the broker. For example, one of the most popular brokers Mosquitto\footnote{\url{https://mosquitto.org/man/mosquitto-conf-5.html}}, as of version 1.6.8 offers password based authentication with ACL capabilities restricting some credentials only to given topics. Related effort was presented in TrustLens project from University of Aberdeen presenting solution of attaching semantic annotations to ongoing operation of a broker and in process allowing higher transparency of broker's state\cite{10.1145/3366610.3368099}. And while it does not provide neither Authentication nor Authorization, it tackles Accountability.
+Common implementation of MQTT brokers includes basic authentication based on a username and a secret password, offering limited to no logging or auditing of operations performed on the broker. For example, one of the most popular brokers Mosquitto\footnote{\url{https://mosquitto.org/man/mosquitto-conf-5.html}}, as of version 1.6.8 offers password based authentication with ACL capabilities restricting some credentials only to given topics. 
 
 I would like to propose a generic, pluggable module following the description of MQTT standard (and thus potentially making it independent from the used MQTT Broker) handling Authentication, Authorization and Accountability of clients attempting connection to the brokers. In order to make the platform more resilient and independent from single points of failure (often being the central ACL repository), I will deploy it on a blockchain - which by convention supports recording of transactions (by placing them on the blockchain) and authentication via ID of the presented wallet. Figure \ref{fig:iot1} represents sketch of the proposed architecture, where the Security element would handle all incoming connections and proxy them accordingly. Due to the public nature of blockchain architecture, transactions would also be available to view by third parties for the purposes of auditing and transparency.
 
@@ -57,6 +57,7 @@ As mentioned, logging, auditing and accountability will be the main focus of the
 
 Preliminary research revealed similar efforts by scientist in Khon Kaen University~\cite{8523942}, although focusing mostly on Hyperledger Fabric and optimization of the configuration through Genetic Algorithms. The paper doesn't make any mention of logging or auditing, which I would like to put more attention towards - along with focusing on Ethereum platform instead.
 
+Related effort was also presented in TrustLens project from University of Aberdeen demonstrating attachment of semantic annotations to ongoing operation of a broker and in process allowing higher transparency of broker's state\cite{10.1145/3366610.3368099}. And while it does not provide neither Authentication nor Authorization, it tackles Accountability.
 
 \section*{Goals}
 
@@ -64,7 +65,7 @@ The project can be divided onto four main goals and two extras, leaving some fie
 
 \paragraph{Main Goals:}
 \begin{enumerate}
-  \item Design Blockchain network, relevant data models that would be placed on the blockchain and deploy on Ethereum platform, capable of recording transactions and allowing for modification of ACLs, i.e. which wallet ID is permitted to access given topics. Part of this goal would also be determining which information is important enough to be recorded and which should be discarded.
+  \item Design Blockchain network, relevant data models that would be placed on the blockchain and deploy on Ethereum platform, capable of recording transactions and allowing for modification of ACLs, i.e. which wallet ID is permitted to access given topics.
   \item Design rules that would be used for capturing the transactions. For example, rule stating that if client makes more than 5 consecutive, failed authentication attempts would be placed on a blacklist and that action would be added onto the blockchain as a transaction. 
   \item Design containerised software acting as a secure proxy between brokers and connecting clients. This will handle both authentication and log performed action as an immutable transaction on a blockchain network. Logging would only be performed if the requested operation triggers some pre-defined rules.
   \item Perform evaluation of the designed solution using an off the shelf MQTT broker and a range of experimental scenarios with simulated network of MQTT clients.
@@ -135,39 +136,25 @@ Extra requirements might arise throughout the project, although I do not expect 
 
 \section*{Risk Assessment}
 
-\bgroup
-\def\arraystretch{2}
-\begin{table}[H]
-\centering
-\begin{tabular}{|m{0.4\textwidth}|m{0.4\textwidth}|m{0.1\textwidth}|}
-\hline
-\textbf{Risk} & \textbf{Mitigation}                       & \textbf{Level} \\ \hline
-\begin{itemize}[leftmargin=*]
-  \item Ethereum doesn't meet my needs or understanding it takes substantial amount of time.
-  \item I face a block relating to knowledge of Ehtereum effectively stopping me from reaching my goals.
-\end{itemize} &
-\begin{itemize}[leftmargin=*]
-  \item Switch to an implementation that I am more familiar with, although with slightly different tradebacks, that is, Hyperledger Fabric.
-\end{itemize} &
-Medium \\ \hline
-\begin{itemize}[leftmargin=*]
-  \item Unexpected hardware failure or theft.
-  \item Any hazards resulting from the natural wear and tear of utilized hardware
-\end{itemize} &
-\begin{itemize}[leftmargin=*]
-  \item All code, documentation and report should be frequently backed up and versioned using git (and thus, uploaded to GitHub), allowing for data recovery in case of a disaster.
-  \item If LoRaWAN gateway or other IoT equipment was to become faulty or technologically infeasible, focus on virtualised solutions, as per first row.
-\end{itemize} &
-Low \\ \hline
-\end{tabular}
-\end{table}
-\egroup
-\pagebreak
+I do not foresee any major risks concerning this project, as everything is performed using open sourced and free software, so there is no financial burden. It's worth to mention two minor risks which I am taking into account:
+\begin{itemize}
+  \item Risk 1:
+    \begin{itemize}
+      \item Risk: Any hardware used as my main driver becomes faulty or drive storage becomes corrupted  
+      \item Mitigation: Frequently backup and version both report and software using git to my GitHub repository.
+    \end{itemize}
+  \item Risk 2:
+    \begin{itemize}
+      \item Risk: Operational issues coming from the functionality of Ethereum. It might be missing some needed features or become infeasible due to other means.
+      \item Mitigation: Utilise a different blockchain network, such as Hyperledger.
+    \end{itemize}
+\end{itemize}
+
 \section*{Timetable\footnote{Live version can be seen at \url{https://bit.ly/2RTiRxV}}}
 
 \begin{figure}[ht]
   \centering
-  \makebox[\textwidth][c]{\includegraphics[scale=0.7]{timeline}}
+  \makebox[\textwidth][c]{\includegraphics[scale=0.52]{timeline}}
 \end{figure}
 \pagebreak
 
