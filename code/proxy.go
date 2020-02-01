@@ -11,6 +11,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const (
+	LOCAL_PORT = ":8888"
+	MQTT_PORT  = ":1883"
+)
+
 func proxyPass(ctx context.Context, lc, rc io.ReadWriteCloser) error {
 	for {
 		b := make([]byte, 4096)
@@ -27,13 +32,13 @@ func proxyPass(ctx context.Context, lc, rc io.ReadWriteCloser) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.After(time.Millisecond * 1000):
+		case <-time.After(time.Millisecond * 200):
 		}
 	}
 }
 
 func proxy(lc net.Conn) {
-	rc, err := net.Dial("tcp", ":1883")
+	rc, err := net.Dial("tcp", MQTT_PORT)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -47,7 +52,6 @@ func proxy(lc net.Conn) {
 	g.Go(func() error {
 		return proxyPass(ctx, rc, lc)
 	})
-
 	if err := g.Wait(); err != nil {
 		fmt.Printf("Proxy finished!\n")
 		fmt.Println(err)
@@ -55,7 +59,7 @@ func proxy(lc net.Conn) {
 }
 
 func main() {
-	l, err := net.Listen("tcp", ":8888")
+	l, err := net.Listen("tcp", LOCAL_PORT)
 	if err != nil {
 		fmt.Println(err)
 		return
