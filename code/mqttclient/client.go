@@ -1,16 +1,35 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+const (
+	PROXY = "ssl://localhost:8888"
+)
+
+func options(id string) *mqtt.ClientOptions {
+	pem, _ := ioutil.ReadFile("server.crt")
+	crt := x509.NewCertPool()
+	crt.AppendCertsFromPEM(pem)
+	tlsOpts := tls.Config{RootCAs: crt, InsecureSkipVerify: true}
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(PROXY)
+	opts.SetClientID(id)
+	opts.SetTLSConfig(&tlsOpts)
+	return opts
+}
+
 func subscribe() {
 	choke := make(chan [2]string)
-	opts := mqtt.NewClientOptions().AddBroker("tcp://localhost:8888").SetClientID("subsriberd")
+	opts := options("subscriber")
 	opts.SetDefaultPublishHandler(func(client mqtt.Client, msg mqtt.Message) {
 		choke <- [2]string{msg.Topic(), string(msg.Payload())}
 	})
@@ -31,7 +50,7 @@ func subscribe() {
 
 func main() {
 	go subscribe()
-	opts := mqtt.NewClientOptions().AddBroker("tcp://localhost:8888").SetClientID("publisher")
+	opts := options("publisher")
 	c := mqtt.NewClient(opts)
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
