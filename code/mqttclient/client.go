@@ -74,6 +74,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 	c.Disconnect(250)
 }

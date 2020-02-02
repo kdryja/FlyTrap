@@ -1,4 +1,4 @@
-module github.com/kdryja96/thesis/code
+module github.com/kdryja96/thesis/code/flytrap
 
 go 1.13
 
