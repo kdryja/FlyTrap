@@ -45,6 +45,7 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *proxy) error {
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
 func New(dst string, c net.Conn, s bool) (*proxy, error) {
 	p := &proxy{dst: dst, lc: c}
+	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
 		if err != nil {
@@ -52,18 +53,16 @@ func New(dst string, c net.Conn, s bool) (*proxy, error) {
 		}
 		crt := x509.NewCertPool()
 		crt.AppendCertsFromPEM(rootCA)
-		rc, err := tls.Dial("tcp", dst, &tls.Config{RootCAs: crt})
+		p.rc, err = tls.Dial("tcp", dst, &tls.Config{RootCAs: crt})
 		if err != nil {
 			return nil, err
 		}
-		p.rc = rc
 		return p, nil
 	}
-	rc, err := net.Dial("tcp", dst)
+	p.rc, err = net.Dial("tcp", dst)
 	if err != nil {
 		return nil, err
 	}
-	p.rc = rc
 	return p, nil
 }
 
