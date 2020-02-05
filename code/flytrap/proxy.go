@@ -6,18 +6,19 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 )
 
 type Proxy struct {
-	dst    string
-	lc, rc net.Conn
+	dst        string
+	lc, rc     net.Conn
+	authTokens *sync.Map
 }
 
 const PROP = "flytrap"
@@ -51,11 +52,11 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 		}
 		// Check if it's CONNECT packet
 		if data[0] == 0x10 {
-			log.Print(hex.Dump(data))
 			sep := []byte(PROP)
-			// Located flytrap specific property in the payload.
+			// Locate flytrap specific property in the payload.
 			i := bytes.Index(data, sep)
 			if i == -1 {
+				// TODO(kdryja) deny access
 				log.Print("token not provided!")
 			} else {
 				// Location of the secret key / value property.
@@ -63,18 +64,23 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 				keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
 				token := string(data[loc+2 : loc+2+int(keyLen)])
 				log.Printf("Token has been found: %s", token)
+				tok, ok := p.authTokens.Load("hello")
+				if !ok {
+					// TODO(kdryja) deny access
+					log.Print("deny, token not found")
+				}
+				log.Print(tok)
 			}
 		}
-		_, err = rc.Write(data)
-		if err != nil {
+		if _, err := rc.Write(data); err != nil {
 			return err
 		}
 	}
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool) (*Proxy, error) {
-	p := &Proxy{dst: dst, lc: c}
+func New(dst string, c net.Conn, s bool, a *sync.Map) (*Proxy, error) {
+	p := &Proxy{dst: dst, lc: c, authTokens: a}
 	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
