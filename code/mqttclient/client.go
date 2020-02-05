@@ -26,6 +26,7 @@ var (
 	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
 	topic   = flag.String("topic", "CustomTopic", "Topic for use for pub/sub")
 	cID     = flag.String("id", "ClientID", "ID of connecting client")
+	token   = "SSignedDataSignedDataSignedDataSignedDataSignedData"
 )
 
 func con() net.Conn {
@@ -54,7 +55,14 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	c := paho.NewClient(paho.ClientConfig{Conn: con(), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 		log.Printf("Message received: %s", string(m.Payload))
 	})})
-	_, err := c.Connect(ctx, &paho.Connect{ClientID: *cID + "_SUB", KeepAlive: 10})
+	_, err := c.Connect(ctx, &paho.Connect{
+		ClientID:  *cID + "_SUB",
+		KeepAlive: 5,
+		Properties: &paho.ConnectProperties{
+			User: map[string]string{
+				"flytrap": token,
+			}},
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +83,14 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 func publish(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	c := paho.NewClient(paho.ClientConfig{Conn: con()})
-	_, err := c.Connect(ctx, &paho.Connect{ClientID: *cID + "_PUB", KeepAlive: 5})
+	_, err := c.Connect(ctx, &paho.Connect{
+		ClientID:  *cID + "_PUB",
+		KeepAlive: 5,
+		Properties: &paho.ConnectProperties{
+			User: map[string]string{
+				"flytrap": token,
+			}},
+	})
 	if err != nil {
 		panic(err)
 	}
