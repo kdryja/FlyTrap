@@ -5,9 +5,8 @@ import (
 	"flag"
 	"log"
 	"net"
-	"sync"
 
-	"github.com/kdryja96/thesis/code/flytrap"
+	"github.com/kdryja/thesis/code/flytrap"
 )
 
 var (
@@ -53,21 +52,18 @@ func main() {
 	defer authL.Close()
 	log.Printf("Now accepting connections under %s", *local_port)
 
-	authMap := &sync.Map{}
-	authMap.LoadOrStore("hello", "world")
+	a := &flytrap.Auth{}
+	go a.Server(authL)
 
-	go func() {
-		for {
-			c, err := mainL.Accept()
-			if err != nil {
-				log.Fatal(err)
-			}
-			proxy, err := flytrap.New(*mqtt_broker, c, *use_tls, authMap)
-			if err != nil {
-				log.Print(err)
-			}
-			go proxy.Handle()
+	for {
+		c, err := mainL.Accept()
+		if err != nil {
+			log.Fatal(err)
 		}
-	}()
-	select {}
+		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls, a)
+		if err != nil {
+			log.Print(err)
+		}
+		go proxy.Handle()
+	}
 }

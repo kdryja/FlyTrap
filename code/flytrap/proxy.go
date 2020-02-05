@@ -1,27 +1,24 @@
 package flytrap
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
-	"sync"
+	"strings"
 
 	"golang.org/x/sync/errgroup"
 )
 
 type Proxy struct {
-	dst        string
-	lc, rc     net.Conn
-	authTokens *sync.Map
+	dst    string
+	lc, rc net.Conn
+	a      *Auth
 }
-
-const PROP = "flytrap"
 
 func readFull(r io.ReadCloser) ([]byte, error) {
 	// First two bytes of the packet represent Control type and remaining length - needed to read the entire packet.
@@ -52,25 +49,13 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 		}
 		// Check if it's CONNECT packet
 		if data[0] == 0x10 {
-			sep := []byte(PROP)
-			// Locate flytrap specific property in the payload.
-			i := bytes.Index(data, sep)
-			if i == -1 {
-				// TODO(kdryja) deny access
-				log.Print("token not provided!")
-			} else {
-				// Location of the secret key / value property.
-				loc := i + len(sep)
-				keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
-				token := string(data[loc+2 : loc+2+int(keyLen)])
-				log.Printf("Token has been found: %s", token)
-				tok, ok := p.authTokens.Load("hello")
-				if !ok {
-					// TODO(kdryja) deny access
-					log.Print("deny, token not found")
-				}
-				log.Print(tok)
+			addr := lc.RemoteAddr().String()
+			addr = addr[:strings.LastIndex(addr, ":")]
+			ok := p.a.Verify(data, addr)
+			if !ok {
+				return fmt.Errorf("authentication failed")
 			}
+			log.Print("Verification successful!")
 		}
 		if _, err := rc.Write(data); err != nil {
 			return err
@@ -79,8 +64,8 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool, a *sync.Map) (*Proxy, error) {
-	p := &Proxy{dst: dst, lc: c, authTokens: a}
+func New(dst string, c net.Conn, s bool, a *Auth) (*Proxy, error) {
+	p := &Proxy{dst: dst, lc: c, a: a}
 	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
