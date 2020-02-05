@@ -1,4 +1,4 @@
-module github.com/kdryja96/thesis/code/mqttclient
+module github.com/kdryja/thesis/code/mqttclient
 
 go 1.13
 

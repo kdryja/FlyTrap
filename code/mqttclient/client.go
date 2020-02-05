@@ -18,20 +18,24 @@ import (
 	"github.com/eclipse/paho.golang/paho"
 )
 
+const (
+	TOKEN_LEN = 64
+)
+
 var (
 	connIP  = flag.String("ip", "localhost:8888", "location of MQTT broker")
+	authIP  = flag.String("auth", "localhost:8889", "location of auth server")
 	connTls = flag.Bool("tls", true, "whether to use TLS")
 	pub     = flag.Bool("pub", false, "Whether to publish")
 	sub     = flag.Bool("sub", false, "Whether to subscribe")
 	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
 	topic   = flag.String("topic", "CustomTopic", "Topic for use for pub/sub")
 	cID     = flag.String("id", "ClientID", "ID of connecting client")
-	token   = "SSignedDataSignedDataSignedDataSignedDataSignedData"
 )
 
-func con() net.Conn {
+func con(ip string) net.Conn {
 	if !*connTls {
-		con, err := net.Dial("tcp", *connIP)
+		con, err := net.Dial("tcp", ip)
 		if err != nil {
 			panic(err)
 		}
@@ -43,24 +47,45 @@ func con() net.Conn {
 		panic(err)
 	}
 	c.AppendCertsFromPEM(pem)
-	con, err := tls.Dial("tcp", *connIP, &tls.Config{RootCAs: c, InsecureSkipVerify: true})
+	con, err := tls.Dial("tcp", ip, &tls.Config{RootCAs: c, InsecureSkipVerify: true})
 	if err != nil {
 		panic(err)
 	}
 	return con
 }
 
+func requestToken() (string, error) {
+	c := con(*authIP)
+	defer c.Close()
+	c.Write([]byte("secret_password"))
+	buf := make([]byte, TOKEN_LEN*2)
+	n, err := c.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	tok := string(buf[:n])
+	if tok == "FAIL" {
+		return "", fmt.Errorf("authentication failed")
+	}
+	return tok, nil
+}
+
 func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
-	c := paho.NewClient(paho.ClientConfig{Conn: con(), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
+	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 		log.Printf("Message received: %s", string(m.Payload))
 	})})
-	_, err := c.Connect(ctx, &paho.Connect{
+	tok, err := requestToken()
+	if err != nil {
+		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
+		return
+	}
+	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_SUB",
 		KeepAlive: 5,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": token,
+				"flytrap": tok,
 			}},
 	})
 	if err != nil {
@@ -82,13 +107,18 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 }
 func publish(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
-	c := paho.NewClient(paho.ClientConfig{Conn: con()})
-	_, err := c.Connect(ctx, &paho.Connect{
+	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP)})
+	tok, err := requestToken()
+	if err != nil {
+		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
+		return
+	}
+	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_PUB",
 		KeepAlive: 5,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": token,
+				"flytrap": tok,
 			}},
 	})
 	if err != nil {
