@@ -16,7 +16,7 @@ type Auth struct {
 }
 
 const (
-	TOKEN_LEN = 32
+	TOKEN_LEN = 64
 	PROP      = "flytrap"
 )
 
@@ -30,6 +30,7 @@ func generateToken() (string, error) {
 }
 func (a *Auth) issue(c net.Conn) {
 	defer c.Close()
+	log.Print("New token request")
 	t := make([]byte, 256)
 	n, err := c.Read(t)
 	if err != nil {
@@ -51,6 +52,7 @@ func (a *Auth) issue(c net.Conn) {
 	}
 	a.tokenMap.Store(addr, tok)
 	c.Write([]byte(tok))
+	log.Print("Token request closed gracefully")
 }
 
 // Verify method checks whether provided token exists in cache.
@@ -66,14 +68,11 @@ func (a *Auth) Verify(data []byte, addr string) bool {
 	loc := i + len(sep)
 	keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
 	token := string(data[loc+2 : loc+2+int(keyLen)])
-	log.Printf("Token has been found: %s", token)
 	authTok, ok := a.tokenMap.Load(addr)
 	if !ok {
 		log.Print(ok)
 		return false
 	}
-	log.Print(authTok)
-	log.Print(token)
 	return authTok == token
 }
 
