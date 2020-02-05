@@ -1,9 +1,11 @@
 package flytrap
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/binary"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
@@ -13,10 +15,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type proxy struct {
+type Proxy struct {
 	dst    string
 	lc, rc net.Conn
 }
+
+const PROP = "flytrap"
 
 func readFull(r io.ReadCloser) ([]byte, error) {
 	// First two bytes of the packet represent Control type and remaining length - needed to read the entire packet.
@@ -34,7 +38,7 @@ func readFull(r io.ReadCloser) ([]byte, error) {
 	return append(h, v...), nil
 }
 
-func proxyPass(ctx context.Context, lc, rc net.Conn, p *proxy) error {
+func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -45,22 +49,22 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *proxy) error {
 		if err != nil {
 			return err
 		}
-		log.Println(hex.Dump(data))
 		// Check if it's CONNECT packet
-		// if data[0] == 0x10 {
-		// 	// Identify the position of two bytes indicating length of ClientID
-		// 	// This is important, as the Protocal Name length varies - which is stored in 3rd and 4th byte.
-		// 	i := 8 + (data[2]<<2 | data[3])
-		// 	// Identify length of ClientID, which is the combination of two bytes
-		// 	idLen := data[i]<<2 | data[i+1]
-		// 	i += 2
-		// 	// Strip username and password from the payload.
-		// 	data = data[:i+idLen]
-		// 	// Change the total-length byte with respect to the removed username/password.
-		// 	data[1] = byte(len(data) - 2)
-		// 	// Clear Password and Username Connect Flag.
-		// 	data[i-5] = data[i-5] & 0x3F
-		// }
+		if data[0] == 0x10 {
+			log.Print(hex.Dump(data))
+			sep := []byte(PROP)
+			// Located flytrap specific property in the payload.
+			i := bytes.Index(data, sep)
+			if i == -1 {
+				log.Print("token not provided!")
+			} else {
+				// Location of the secret key / value property.
+				loc := i + len(sep)
+				keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
+				token := string(data[loc+2 : loc+2+int(keyLen)])
+				log.Printf("Token has been found: %s", token)
+			}
+		}
 		_, err = rc.Write(data)
 		if err != nil {
 			return err
@@ -69,8 +73,8 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *proxy) error {
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool) (*proxy, error) {
-	p := &proxy{dst: dst, lc: c}
+func New(dst string, c net.Conn, s bool) (*Proxy, error) {
+	p := &Proxy{dst: dst, lc: c}
 	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
@@ -93,7 +97,7 @@ func New(dst string, c net.Conn, s bool) (*proxy, error) {
 }
 
 // Handle starts a bidirectional proxy between provided connection and destination.
-func (p *proxy) Handle() {
+func (p *Proxy) Handle() {
 	log.Printf("Starting new proxy connection (%s >> %s)\n", p.lc.RemoteAddr().String(), p.dst)
 	defer p.rc.Close()
 	defer p.lc.Close()
