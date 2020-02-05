@@ -21,9 +21,10 @@ import (
 var (
 	connIP  = flag.String("ip", "localhost:8888", "location of MQTT broker")
 	connTls = flag.Bool("tls", true, "whether to use TLS")
-	pubMsg  = flag.String("msg", "", "message to be published")
-	pubTpc  = flag.String("topic", "MyTopic", "topic to publish messages to")
-	subTpc  = flag.String("sub", "", "topic to subscribe to")
+	pub     = flag.Bool("pub", false, "Whether to publish")
+	sub     = flag.Bool("sub", false, "Whether to subscribe")
+	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
+	topic   = flag.String("topic", "CustomTopic", "Topic for use for pub/sub")
 	cID     = flag.String("id", "ClientID", "ID of connecting client")
 )
 
@@ -59,14 +60,12 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	}
 	defer c.Disconnect(&paho.Disconnect{})
 	sub := paho.Subscribe{Subscriptions: map[string]paho.SubscribeOptions{
-		*subTpc: paho.SubscribeOptions{QoS: 0},
+		*topic: paho.SubscribeOptions{QoS: 0},
 	}}
 	_, err = c.Subscribe(ctx, &sub)
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Second * 3)
-	return
 	select {
 	case <-ctx.Done():
 		log.Print("Disconnecting Subscriber...")
@@ -90,14 +89,13 @@ func publish(wg *sync.WaitGroup, ctx context.Context) {
 		default:
 		}
 		msg := fmt.Sprintf("%s #%d", *pubMsg, i)
-		_, err = c.Publish(ctx, &paho.Publish{Topic: *pubTpc, Payload: []byte(msg), QoS: 1})
+		_, err = c.Publish(ctx, &paho.Publish{Topic: *topic, Payload: []byte(msg), QoS: 1})
 		log.Printf("Published message: %s", msg)
 		if err != nil {
 			panic(err)
 		}
 		i += 1
 		time.Sleep(time.Second)
-		return
 	}
 }
 func main() {
@@ -106,11 +104,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
 
-	if *pubMsg != "" {
+	if *pub {
 		wg.Add(1)
 		go publish(wg, ctx)
 	}
-	if *subTpc != "" {
+	if *sub {
 		wg.Add(1)
 		go subscribe(wg, ctx)
 	}
@@ -121,5 +119,4 @@ func main() {
 	log.Print("Received SIGINT, disconnecting clients...")
 	cancel()
 	wg.Wait()
-
 }
