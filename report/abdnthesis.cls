@@ -27,11 +27,12 @@
 \def \fileversion{2.3}
 \def \filedate{2013/08/11}
 
-\newcommand \@doctor{Doctor of Philosophy}
+% \newcommand \@doctor{Doctor of Philosophy}
 \newcommand \@masterphil{Master of Philosophy}
+\newcommand \@mastersinsci{Master in Science}
 \newcommand \@mastersci{Master of Science}
 \newcommand \@bachelor{Bachelor of Science}
-\newcommand \@degree@string{\@doctor}
+\newcommand \@degree@string{\@mastersinsci}
 
 % This is used to specify the department/school of the student
 \def\school#1{\gdef\@school{#1}}
@@ -77,6 +78,10 @@
     \renewcommand\@degree@string{\@doctor}}
 \DeclareOption{PhD}{%
     \renewcommand\@degree@string{\@doctor}}
+\DeclareOption{msci}{%
+    \renewcommand\@degree@string{\@mastersinsci}}
+\DeclareOption{MSci}{%
+    \renewcommand\@degree@string{\@mastersinsci}}
 \DeclareOption{twocolumn}{%
     \ClassError{abdnthesis}{Option `twocolumn' not supported}{}}
 
@@ -518,7 +523,7 @@
 
     \vskip 40\p@%
 
-    \noindent Date: \@date%
+    \noindent Date: \today%
 }
 \endinput
 
