@@ -17,8 +17,12 @@
 %   \citeyear{key} ==>>             1990                                             
 
 \usepackage[round,colon,authoryear]{natbib}
+\usepackage[utf8]{inputenc}
+% \usepackage[acronym]{glossaries}
+\usepackage{glossaries}
 \setlength{\bibsep}{0pt}
 \bibliographystyle{apalike}
+\graphicspath{ {./img/} }
 
 \usepackage[T1]{fontenc}
 
@@ -56,6 +60,18 @@
 %% references to those file not included) but will produce a dvi
 %% file with only those files/chapters you specify included.
 
+\makenoidxglossaries
+\newacronym{iot}{IoT}{Internet of Things}
+\newacronym{mqtt}{MQTT}{Message Queuing Telemetry Transport}
+\newacronym{gdpr}{GDPR}{General Data Protection Regulation}
+\newacronym{rfid}{RFID}{Radio-Frequency Identification}
+\newacronym{tcp}{TCP}{Transmission Control Protocol}
+\newacronym{AAA}{AAA}{Authentication Authorization Accountability}
+\newacronym{ACL}{ACL}{Access Control List}
+\newacronym{CCPA}{CCPA}{California Consumer Privacy Act}
+\newacronym{TLS}{TLS}{Transport Layer Security}
+\glsaddall
+
 \begin{document}
 
 %%%% Create the title page and standard declaration.
@@ -73,18 +89,22 @@
   Much stuff borrowed from elsewhere
 \end{acknowledgements}
 
+
 %%%% It should have a table of contents, but delete the other two as
 %%%% necessary.
 
 \tableofcontents
-%\listoftables
-%\listoffigures
+% \listoftables
+% \listoffigures
+
+\printnoidxglossary[type=\acronymtype,title=Abreviations,nonumberlist]
+% \printglossary[type=\acronymtype,style=long,nonumberlist]
 
 \include{introduction}
 \include{faq}
 % \include{literature-survey}
-% \include{design}
-% \include{implementation}
+\include{design}
+\include{implementation}
 % \include{evaluation}
 % \include{discussion}
 % \include{conclusion}
