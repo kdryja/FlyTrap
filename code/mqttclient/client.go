@@ -23,14 +23,15 @@ const (
 )
 
 var (
-	connIP  = flag.String("ip", "localhost:8888", "location of MQTT broker")
-	authIP  = flag.String("auth", "localhost:8889", "location of auth server")
-	connTls = flag.Bool("tls", true, "whether to use TLS")
-	pub     = flag.Bool("pub", false, "Whether to publish")
-	sub     = flag.Bool("sub", false, "Whether to subscribe")
-	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
-	topic   = flag.String("topic", "CustomTopic", "Topic for use for pub/sub")
-	cID     = flag.String("id", "ClientID", "ID of connecting client")
+	connIP    = flag.String("ip", "localhost:8888", "location of MQTT broker")
+	authIP    = flag.String("auth", "localhost:8889", "location of auth server")
+	connTls   = flag.Bool("tls", true, "whether to use TLS")
+	pub       = flag.Bool("pub", false, "Whether to publish")
+	sub       = flag.Bool("sub", false, "Whether to subscribe")
+	pubMsg    = flag.String("msg", "Here Be Dragons", "message to be published")
+	topic     = flag.String("topic", "MyTopic", "Topic for use for pub/sub")
+	cID       = flag.String("id", "ClientID", "ID of connecting client")
+	publicKey = flag.String("key", "0x641c46D43A3c552a76318c12D8Fc2839b913F32F", "Provide public key for Ethereum wallet")
 )
 
 func con(ip string) net.Conn {
@@ -75,17 +76,17 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 		log.Printf("Message received: %s", string(m.Payload))
 	})})
-	tok, err := requestToken()
-	if err != nil {
-		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
-		return
-	}
-	_, err = c.Connect(ctx, &paho.Connect{
+	// tok, err := requestToken()
+	// if err != nil {
+	// 	log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
+	// 	return
+	// }
+	_, err := c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_SUB",
 		KeepAlive: 5,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": tok,
+				"flytrap": *publicKey,
 			}},
 	})
 	if err != nil {

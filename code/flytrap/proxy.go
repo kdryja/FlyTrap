@@ -1,16 +1,17 @@
 package flytrap
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
+	"encoding/binary"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
-	"strings"
 
+	"github.com/kdryja/thesis/code/flytrap/blockchain"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -19,6 +20,8 @@ type Proxy struct {
 	lc, rc net.Conn
 	a      *Auth
 }
+
+var subackDenied = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
 
 func readFull(r io.ReadCloser) ([]byte, error) {
 	// First two bytes of the packet represent Control type and remaining length - needed to read the entire packet.
@@ -37,6 +40,8 @@ func readFull(r io.ReadCloser) ([]byte, error) {
 }
 
 func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
+	var publicKey string
+	pubPerms := make(map[string]struct{})
 	for {
 		select {
 		case <-ctx.Done():
@@ -49,14 +54,56 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 		}
 		// Check if it's CONNECT packet
 		if data[0] == 0x10 {
-			addr := lc.RemoteAddr().String()
-			addr = addr[:strings.LastIndex(addr, ":")]
-			ok := p.a.Verify(data, addr)
-			if !ok {
-				return fmt.Errorf("authentication failed")
+			sep := []byte(PROP)
+			// Locate flytrap specific property in the payload.
+			i := bytes.Index(data, sep)
+			// -1 means that token was not found
+			if i == -1 {
+				// Write SUBACK packet to client, denying access
+				if _, err := lc.Write(subackDenied); err != nil {
+					return err
+				}
 			}
-			log.Print("Verification successful!")
+			// Location of the secret key / value property.
+			loc := i + len(sep)
+			keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
+			publicKey = string(data[loc+2 : loc+2+int(keyLen)])
 		}
+		// Check if it's SUBSCRIBE packet
+		if data[0] == 0x82 {
+			topics := []string{}
+			propertyLen := binary.BigEndian.Uint16(data[2:4])
+			start := propertyLen + 4
+			for {
+				topicLen := binary.BigEndian.Uint16(data[start : start+2])
+				topics = append(topics, string(data[start+2:start+2+topicLen]))
+				start = start + 3 + topicLen
+				if int(start) == len(data) {
+					break
+				}
+			}
+			for _, topic := range topics {
+				// Check if permission was already verified, if so, skip blockchain communication, as it's costly
+				if _, ok := pubPerms[topic]; ok {
+					continue
+				}
+				ok, err := blockchain.Verify(topic, publicKey, true)
+				if err != nil {
+					return err
+				}
+				// Check if pubkey is placed on blockchain
+				if ok {
+					// Cache the result for future requests
+					pubPerms[topic] = struct{}{}
+					continue
+				}
+				// Write SUBACK packet to client, denying access
+				if _, err := lc.Write(subackDenied); err != nil {
+					return err
+				}
+			}
+		}
+
 		if _, err := rc.Write(data); err != nil {
 			return err
 		}
