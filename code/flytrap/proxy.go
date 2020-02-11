@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,7 +22,10 @@ type Proxy struct {
 	a      *Auth
 }
 
-var subackDenied = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
+var (
+	subackDenied = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
+	pubackDenied = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
+)
 
 func readFull(r io.ReadCloser) ([]byte, error) {
 	// First two bytes of the packet represent Control type and remaining length - needed to read the entire packet.
@@ -44,6 +46,7 @@ func readFull(r io.ReadCloser) ([]byte, error) {
 func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 	var authToken string
 	var pubKey common.Address
+	subPerms := make(map[string]struct{})
 	pubPerms := make(map[string]struct{})
 	for {
 		select {
@@ -100,21 +103,22 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			}
 			for _, topic := range topics {
 				// Check if permission was already verified, if so, skip blockchain communication, as it's costly
-				if _, ok := pubPerms[topic]; ok {
+				if _, ok := subPerms[topic]; ok {
+					log.Printf("Client %q was authorised to subscribe to topic %q", pubKey.String(), topic)
 					continue
 				}
-				ok := true
 				ok, err := blockchain.VerifyAccess(topic, pubKey, false)
 				if err != nil {
 					return err
 				}
-				log.Print(ok)
-				// Check if pubkey is placed on blockchain
+				// Check if pubkey is authorized to sub to given topic
 				if ok {
 					// Cache the result for future requests
-					pubPerms[topic] = struct{}{}
+					subPerms[topic] = struct{}{}
+					log.Printf("Client %q was authorised to subscribe to topic %q", pubKey.String(), topic)
 					continue
 				}
+				log.Printf("Client %q attempted subscribe to topic %q and was denied due to insufficient permission", pubKey.String(), topic)
 				// Write SUBACK packet to client, denying access
 				if _, err := lc.Write(subackDenied); err != nil {
 					return err
@@ -122,11 +126,28 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			}
 		}
 		// Check if it's PUBLISH packet, coming from the client
-		log.Print(hex.Dump(data))
-		if data[0] == 0x03 && p.lc == lc {
-			log.Print(hex.Dump(data))
+		if data[0] == 0x32 && p.lc == lc {
+			topLen := data[3+data[2]]
+			topic := string(data[4+data[2] : 4+data[2]+topLen])
+			// Check if permission was already verified, if so, skip blockchain communication, as it's costly
+			if _, ok := pubPerms[topic]; !ok {
+				ok, err := blockchain.VerifyAccess(topic, pubKey, true)
+				if err != nil {
+					return err
+				}
+				// Check if pubkey is authorized to publish to given topic
+				if !ok {
+					log.Printf("Client %q attempted publish to topic %q and was denied due to insufficient permission", pubKey.String(), topic)
+					// Write PUBACK packet to client, denying access
+					if _, err := lc.Write(pubackDenied); err != nil {
+						return err
+					}
+				}
+			}
+			// Cache the result for future requests
+			pubPerms[topic] = struct{}{}
+			log.Printf("Client %q was authorised to publish to topic %q", pubKey.String(), topic)
 		}
-
 		if _, err := rc.Write(data); err != nil {
 			return err
 		}
