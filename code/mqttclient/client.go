@@ -93,7 +93,6 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	tok, err := obtainToken()
 	if err != nil {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
-		return
 	}
 	log.Printf("Using following token: %s", tok)
 

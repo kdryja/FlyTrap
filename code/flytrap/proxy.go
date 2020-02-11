@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,8 +24,9 @@ type Proxy struct {
 }
 
 var (
-	subackDenied = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
-	pubackDenied = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
+	connackDenied = []byte{0x20, 0x03, 0x00, 0x87, 0x00}
+	subackDenied  = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
+	pubackDenied  = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
 )
 
 func readFull(r io.ReadCloser) ([]byte, error) {
@@ -65,10 +67,12 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			i := bytes.Index(data, sep)
 			// -1 means that token was not found
 			if i == -1 {
-				// Write SUBACK packet to client, denying access
-				if _, err := lc.Write(subackDenied); err != nil {
+				// Write CONNACK packet to client, denying access
+				if _, err := lc.Write(connackDenied); err != nil {
 					return err
 				}
+				rc.Close()
+				return fmt.Errorf("flytrap flag not provided, access denied")
 			}
 			// Location of the secret key / value property.
 			loc := i + len(sep)
@@ -89,7 +93,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			}
 		}
 		// Check if it's SUBSCRIBE packet
-		if data[0] == 0x82 {
+		if data[0]&0xf0 == 0x80 {
 			topics := []string{}
 			propertyLen := binary.BigEndian.Uint16(data[2:4])
 			start := propertyLen + 4
@@ -126,7 +130,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			}
 		}
 		// Check if it's PUBLISH packet, coming from the client
-		if data[0] == 0x32 && p.lc == lc {
+		if data[0]&0xf0 == 0x30 && p.lc == lc {
 			topLen := data[3+data[2]]
 			topic := string(data[4+data[2] : 4+data[2]+topLen])
 			// Check if permission was already verified, if so, skip blockchain communication, as it's costly

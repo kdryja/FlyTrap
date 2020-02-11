@@ -46,13 +46,13 @@ func (a *Auth) issue(c net.Conn) {
 		log.Print(err)
 		return
 	}
-	log.Printf("Generated token: %s", tok)
 	log.Printf("Provided pubkey: %s", t)
 	if err := blockchain.RegisterToken(tok, common.HexToAddress(string(t))); err != nil {
-		log.Fatal(err)
+		log.Printf("Registration of new token has failed with: %q", err)
 		c.Write([]byte("FAIL"))
 		return
 	}
+	log.Printf("Generated token: %s", tok)
 	c.Write([]byte(tok))
 	log.Print("Token request closed gracefully")
 }
