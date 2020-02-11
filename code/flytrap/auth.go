@@ -7,8 +7,10 @@ import (
 	"encoding/binary"
 	"log"
 	"net"
-	"strings"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
 type Auth struct {
@@ -16,7 +18,7 @@ type Auth struct {
 }
 
 const (
-	TOKEN_LEN = 64
+	TOKEN_LEN = 32
 	PROP      = "flytrap"
 )
 
@@ -38,19 +40,19 @@ func (a *Auth) issue(c net.Conn) {
 		return
 	}
 	t = t[:n]
-	// TODO(kdryja) Verify provided password here
-	if string(t) != "secret_password" {
-		log.Print("Failed auth!")
-		return
-	}
-	addr := c.RemoteAddr().String()
-	addr = addr[:strings.LastIndex(addr, ":")]
+
 	tok, err := generateToken()
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	a.tokenMap.Store(addr, tok)
+	log.Printf("Generated token: %s", tok)
+	log.Printf("Provided pubkey: %s", t)
+	if err := blockchain.RegisterToken(tok, common.HexToAddress(string(t))); err != nil {
+		log.Fatal(err)
+		c.Write([]byte("FAIL"))
+		return
+	}
 	c.Write([]byte(tok))
 	log.Print("Token request closed gracefully")
 }

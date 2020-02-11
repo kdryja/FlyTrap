@@ -13,32 +13,62 @@ import (
 )
 
 const (
-	ADDRESS        = "http://localhost:7545"
-	SERVER_PRIVKEY = "privkey.txt"
-	CONTRACT       = "0xf3776E4BfEb3856E46a18d336F131BAD20904c04"
+	ADDRESS             = "http://localhost:7545"
+	SERVER_PRIVKEY      = "privkey.txt"
+	FLYTRAP_CONTRACT    = "0xf3776E4BfEb3856E46a18d336F131BAD20904c04"
+	AUTHORIZER_CONTRACT = "0xEB8404Ad69693967F9Bb9834DB2463f62f121562"
 )
 
 type Blockchain struct {
 	Instance *Flytrap
 	Opts     *bind.TransactOpts
-	client   *ethclient.Client
+	Client   *ethclient.Client
 }
 
-// Verify function will inspect smart contract to determine whether the provided public key can publish / subscribe to given topic.
-func Verify(topic, key string, pub bool) (bool, error) {
+// VerifyAccess function will inspect smart contract to determine whether the provided public key can publish / subscribe to given topic.
+func VerifyAccess(topic string, key common.Address, pub bool) (bool, error) {
 	b, err := New()
 	if err != nil {
 		return false, err
 	}
-	if err := b.SetInstance(common.HexToAddress(CONTRACT)); err != nil {
+	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
 		return false, err
 	}
 	t := [32]byte{}
 	copy(t[:], topic)
 	if pub {
-		return b.Instance.VerifyPub(nil, common.HexToAddress(key), t)
+		return b.Instance.VerifyPub(nil, key, t)
 	}
-	return b.Instance.VerifySub(nil, common.HexToAddress(key), t)
+	return b.Instance.VerifySub(nil, key, t)
+}
+
+func RegisterToken(token string, address common.Address) error {
+	b, err := New()
+	if err != nil {
+		return err
+	}
+	t := [32]byte{}
+	copy(t[:], token)
+	inst, err := NewAuthorizer(common.HexToAddress(AUTHORIZER_CONTRACT), b.Client)
+	if err != nil {
+		return err
+	}
+	_, err = inst.RegisterToken(b.Opts, t, address)
+	return err
+}
+
+func RetrievePubkey(token string) (common.Address, error) {
+	b, err := New()
+	if err != nil {
+		return common.Address{}, err
+	}
+	t := [32]byte{}
+	copy(t[:], token)
+	inst, err := NewAuthorizer(common.HexToAddress(AUTHORIZER_CONTRACT), b.Client)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return inst.RetrieveKey(nil, t)
 }
 
 func New() (*Blockchain, error) {
@@ -69,11 +99,11 @@ func New() (*Blockchain, error) {
 	auth.Value = big.NewInt(0)     // in wei
 	auth.GasLimit = uint64(500000) // in units
 	auth.GasPrice = gasPrice
-	return &Blockchain{Opts: auth, client: client}, err
+	return &Blockchain{Opts: auth, Client: client}, err
 }
 
 func (b *Blockchain) SetInstance(contract common.Address) error {
-	inst, err := NewFlytrap(contract, b.client)
+	inst, err := NewFlytrap(contract, b.Client)
 	b.Instance = inst
 	return err
 }
@@ -85,7 +115,14 @@ func (b *Blockchain) AddPub(key, topic string) error {
 	return err
 }
 
+func (b *Blockchain) AddSub(key, topic string) error {
+	t := [32]byte{}
+	copy(t[:], topic)
+	_, err := b.Instance.AddSub(b.Opts, common.HexToAddress(key), t)
+	return err
+}
+
 func (b *Blockchain) GenerateContract(cost int) (common.Address, error) {
-	addr, _, _, err := DeployFlytrap(b.Opts, b.client, big.NewInt(int64(cost)))
+	addr, _, _, err := DeployFlytrap(b.Opts, b.Client, big.NewInt(int64(cost)))
 	return addr, err
 }

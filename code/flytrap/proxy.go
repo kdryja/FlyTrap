@@ -6,11 +6,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 	"golang.org/x/sync/errgroup"
 )
@@ -39,8 +41,9 @@ func readFull(r io.ReadCloser) ([]byte, error) {
 	return append(h, v...), nil
 }
 
-func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
-	var publicKey string
+func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
+	var authToken string
+	var pubKey common.Address
 	pubPerms := make(map[string]struct{})
 	for {
 		select {
@@ -67,7 +70,20 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 			// Location of the secret key / value property.
 			loc := i + len(sep)
 			keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
-			publicKey = string(data[loc+2 : loc+2+int(keyLen)])
+			authToken = string(data[loc+2 : loc+2+int(keyLen)])
+
+			// First check if token => public key is already in cache
+			if k, ok := p.a.tokenMap.Load(authToken); ok == true {
+				pubKey = k.(common.Address)
+			} else {
+				// Public key is not present in cache, retrieve it from blockchain
+				pubKey, err = blockchain.RetrievePubkey(authToken)
+				if err != nil {
+					return err
+				}
+				// Cache the token => public key mapping, to avoid future blockchain queries
+				p.a.tokenMap.Store(authToken, pubKey)
+			}
 		}
 		// Check if it's SUBSCRIBE packet
 		if data[0] == 0x82 {
@@ -87,10 +103,12 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 				if _, ok := pubPerms[topic]; ok {
 					continue
 				}
-				ok, err := blockchain.Verify(topic, publicKey, true)
+				ok := true
+				ok, err := blockchain.VerifyAccess(topic, pubKey, false)
 				if err != nil {
 					return err
 				}
+				log.Print(ok)
 				// Check if pubkey is placed on blockchain
 				if ok {
 					// Cache the result for future requests
@@ -102,6 +120,11 @@ func proxyPass(ctx context.Context, lc, rc net.Conn, p *Proxy) error {
 					return err
 				}
 			}
+		}
+		// Check if it's PUBLISH packet, coming from the client
+		log.Print(hex.Dump(data))
+		if data[0] == 0x03 && p.lc == lc {
+			log.Print(hex.Dump(data))
 		}
 
 		if _, err := rc.Write(data); err != nil {
@@ -141,10 +164,10 @@ func (p *Proxy) Handle() {
 	defer p.lc.Close()
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
-		return proxyPass(ctx, p.lc, p.rc, p)
+		return p.proxyPass(ctx, p.lc, p.rc)
 	})
 	g.Go(func() error {
-		return proxyPass(ctx, p.rc, p.lc, p)
+		return p.proxyPass(ctx, p.rc, p.lc)
 	})
 	if err := g.Wait(); err != nil && err != io.EOF {
 		log.Println(err)
