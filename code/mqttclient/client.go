@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -75,23 +74,9 @@ func obtainToken() (string, error) {
 	var payload []byte
 	payload = append(append(sig, 0x00, 0x00), compKey...)
 
-	received := bytes.SplitN(payload, []byte{0x00, 0x00}, 2)
-	sig2 := received[0]
-	rKey, err := crypto.DecompressPubkey(received[1])
-	if err != nil {
-		return "", err
-	}
-	hash2 := crypto.PubkeyToAddress(*rKey).Hash().Bytes()
-	pub, err := crypto.SigToPub(hash2, sig2)
-	if err != nil {
-		return "", err
-	}
-	log.Print(crypto.PubkeyToAddress(*rKey) == crypto.PubkeyToAddress(*pub))
-	return "", nil
-
 	c := con(*authIP)
 	defer c.Close()
-	c.Write([]byte(*publicKey))
+	c.Write([]byte(payload))
 	buf := make([]byte, TOKEN_LEN*2)
 	n, err := c.Read(buf)
 	if err != nil {
@@ -122,7 +107,6 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
 	log.Printf("Using following token: %s", tok)
-	os.Exit(1)
 
 	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_SUB",

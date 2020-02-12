@@ -7,8 +7,8 @@ contract Authorizer {
     mapping(bytes32 => address) public tokens;
     mapping(address => bool) public addresses;
 
-    constructor() public {
-        owner = msg.sender;
+    constructor(address payable sender) public {
+        owner = sender;
     }
 
     function registerToken(bytes32 token, address person) public {

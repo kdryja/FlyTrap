@@ -1,8 +1,10 @@
 pragma solidity >=0.4.22 <0.7.0;
 
+import "./authorizer.sol";
 
 contract Flytrap {
     address payable owner;
+    Authorizer public authorizer;
     uint addTopicCost;
 
     struct Topic {
@@ -20,6 +22,7 @@ contract Flytrap {
     constructor(uint cost) public {
         owner = msg.sender;
         addTopicCost = cost;
+        authorizer = new Authorizer(msg.sender);
     }
 
 

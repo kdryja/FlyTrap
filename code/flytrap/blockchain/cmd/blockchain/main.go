@@ -9,15 +9,15 @@ import (
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
-const CLIENT = "0x641c46D43A3c552a76318c12D8Fc2839b913F32F"
+const CLIENT = "0x132944508E41FD8549657A33690325c6032AB108"
 
 var (
-	contract  = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
-	newTopic  = flag.Bool("new_topic", false, "Whether new topic should be created")
-	addPub    = flag.Bool("pub", false, "Client to add as publisher")
-	addSub    = flag.Bool("sub", false, "Client to add as subscriber")
-	addAuth   = flag.Bool("auth", false, "Whether to create new contract for authorizer")
-	topicName = flag.String("topic", "MyTopic", "name of the topic to modify")
+	contract    = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
+	newTopic    = flag.Bool("new_topic", false, "Whether new topic should be created")
+	addPub      = flag.Bool("pub", false, "Client to add as publisher")
+	addSub      = flag.Bool("sub", false, "Client to add as subscriber")
+	addContract = flag.Bool("new", false, "Whether to create new contracts for authorizer and flytrap")
+	topicName   = flag.String("topic", "MyTopic", "name of the topic to modify")
 )
 
 func main() {
@@ -27,12 +27,17 @@ func main() {
 		log.Fatal(err)
 	}
 	var addr common.Address
-	if *addAuth {
-		addr, _, _, err := blockchain.DeployAuthorizer(b.Opts, b.Client)
+	if *addContract {
+		addr, _, inst, err := blockchain.DeployFlytrap(b.Opts, b.Client, big.NewInt(0))
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Generated new authorizer, address is: %s", addr)
+		authAddr, err := inst.Authorizer(nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Generated new contract, address is: %s", addr.Hex())
+		log.Printf("Generated new authorizer, address is: %s", authAddr.Hex())
 	}
 	if *contract == "" {
 		if addr, err = b.GenerateContract(100); err != nil {

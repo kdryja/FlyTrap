@@ -14,9 +14,9 @@ import (
 
 const (
 	ADDRESS             = "http://localhost:7545"
-	SERVER_PRIVKEY      = "privkey.txt"
-	FLYTRAP_CONTRACT    = "0xf3776E4BfEb3856E46a18d336F131BAD20904c04"
-	AUTHORIZER_CONTRACT = "0xEB8404Ad69693967F9Bb9834DB2463f62f121562"
+	SERVER_PRIVKEY      = "privkey.asc"
+	FLYTRAP_CONTRACT    = "0xa53cEaD0ABC76B24F8966E873bF3bA5dba201735"
+	AUTHORIZER_CONTRACT = "0xe260dE168679c271166E2D6081645cBe66Ba1511"
 )
 
 type Blockchain struct {
@@ -32,6 +32,7 @@ func VerifyAccess(topic string, key common.Address, pub bool) (bool, error) {
 		return false, err
 	}
 	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
+
 		return false, err
 	}
 	t := [32]byte{}
@@ -97,7 +98,7 @@ func New() (*Blockchain, error) {
 	auth := bind.NewKeyedTransactor(priv)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(500000) // in units
+	auth.GasLimit = uint64(800000) // in units
 	auth.GasPrice = gasPrice
 	return &Blockchain{Opts: auth, Client: client}, err
 }

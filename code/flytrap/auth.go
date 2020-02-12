@@ -10,7 +10,6 @@ import (
 	"net"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
@@ -63,7 +62,7 @@ func (a *Auth) issue(c net.Conn) {
 			return "", err
 		}
 		log.Printf("Provided pubkey: %s", sigPub.String())
-		return tok, blockchain.RegisterToken(tok, common.HexToAddress(sigPub.String()))
+		return tok, blockchain.RegisterToken(tok, sigPub)
 	}()
 	if err != nil {
 		log.Printf("Registration of new token has failed with: %q", err)
