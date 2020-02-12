@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"net"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 	"golang.org/x/sync/errgroup"
 )
@@ -30,23 +32,45 @@ var (
 )
 
 func readFull(r io.ReadCloser) ([]byte, error) {
-	// First two bytes of the packet represent Control type and remaining length - needed to read the entire packet.
-	h := make([]byte, 2)
+	// FUp to the first five bytes of the packet represent Control type and remaining length - needed to read the entire packet.
+	h := make([]byte, 1)
 	_, err := io.ReadFull(r, h)
 	if err != nil {
 		return nil, err
 	}
-	// Second byte indicates remaining length of the packet.
-	v := make([]byte, h[1])
+
+	var varHeader []byte
+
+	multiplier := 1
+	var value int
+	for {
+		eB := make([]byte, 1)
+		_, err := io.ReadFull(r, eB)
+		if err != nil {
+			return nil, err
+		}
+		varHeader = append(varHeader, eB...)
+		b := int(eB[0])
+		value += (b & 127) * multiplier
+		if multiplier > 128*128*128 {
+			return nil, fmt.Errorf("malformed variable byte integer")
+		}
+		multiplier *= 128
+		if b&128 == 0 {
+			break
+		}
+	}
+	log.Print(value)
+
+	v := make([]byte, value)
 	_, err = io.ReadFull(r, v)
 	if err != nil {
 		return nil, err
 	}
-	return append(h, v...), nil
+	return append(append(h, varHeader...), v...), nil
 }
 
 func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
-	var authToken string
 	var pubKey common.Address
 	subPerms := make(map[string]struct{})
 	pubPerms := make(map[string]struct{})
@@ -60,6 +84,8 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 		if err != nil {
 			return err
 		}
+		log.Print(hex.Dump(data))
+		var conErr error
 		// Check if it's CONNECT packet
 		if data[0] == 0x10 {
 			sep := []byte(PROP)
@@ -69,7 +95,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			if i == -1 {
 				// Write CONNACK packet to client, denying access
 				if _, err := lc.Write(connackDenied); err != nil {
-					return err
+					conErr = err
 				}
 				rc.Close()
 				return fmt.Errorf("flytrap flag not provided, access denied")
@@ -77,20 +103,33 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			// Location of the secret key / value property.
 			loc := i + len(sep)
 			keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
-			authToken = string(data[loc+2 : loc+2+int(keyLen)])
-
-			// First check if token => public key is already in cache
-			if k, ok := p.a.tokenMap.Load(authToken); ok == true {
-				pubKey = k.(common.Address)
-			} else {
-				// Public key is not present in cache, retrieve it from blockchain
-				pubKey, err = blockchain.RetrievePubkey(authToken)
-				if err != nil {
-					return err
-				}
-				// Cache the token => public key mapping, to avoid future blockchain queries
-				p.a.tokenMap.Store(authToken, pubKey)
+			log.Print(keyLen)
+			sigBytes := make([]byte, keyLen)
+			copy(sigBytes, data[loc+2:loc+2+int(keyLen)])
+			// Attempting to split the payload into signature and compressed public key
+			received := bytes.SplitN(sigBytes, []byte{0x00, 0x00}, 2)
+			log.Printf("%s", sigBytes)
+			sig := received[0]
+			pubBytes, err := crypto.DecompressPubkey(received[1])
+			if err != nil {
+				conErr = err
 			}
+			sigPub := crypto.PubkeyToAddress(*pubBytes)
+			pub, err := crypto.SigToPub(sigPub.Hash().Bytes(), sig)
+			if err != nil {
+				conErr = err
+			}
+			if crypto.PubkeyToAddress(*pub) != sigPub {
+				conErr = fmt.Errorf("signature was forged")
+			}
+			log.Printf("Provided pubkey: %s", sigPub.String())
+			pubKey = sigPub
+		}
+		// Verifying provided pubkey failed, cancelling proxy
+		if conErr != nil {
+			lc.Write(connackDenied)
+			rc.Close()
+			return conErr
 		}
 		// Check if it's SUBSCRIBE packet
 		if data[0]&0xf0 == 0x80 {
@@ -152,6 +191,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			pubPerms[topic] = struct{}{}
 			log.Printf("Client %q was authorised to publish to topic %q", pubKey.String(), topic)
 		}
+		log.Print("writing response now")
 		if _, err := rc.Write(data); err != nil {
 			return err
 		}

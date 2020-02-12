@@ -62,7 +62,6 @@ func obtainToken() (string, error) {
 	if authToken, err := ioutil.ReadFile(*tokFile); err == nil {
 		return string(authToken), nil
 	}
-
 	priv, err := crypto.LoadECDSA("privkey.asc")
 	hash := crypto.PubkeyToAddress(priv.PublicKey).Hash().Bytes()
 	sig, err := crypto.Sign(hash, priv)
@@ -73,27 +72,7 @@ func obtainToken() (string, error) {
 	compKey := crypto.CompressPubkey(&priv.PublicKey)
 	var payload []byte
 	payload = append(append(sig, 0x00, 0x00), compKey...)
-
-	c := con(*authIP)
-	defer c.Close()
-	c.Write([]byte(payload))
-	buf := make([]byte, TOKEN_LEN*2)
-	n, err := c.Read(buf)
-	if err != nil {
-		return "", err
-	}
-	tok := string(buf[:n])
-	if tok == "FAIL" {
-		return "", fmt.Errorf("this pubkey was already registered, use your token instead")
-	}
-	// Save the obtained token in current dir
-	file, err := os.Create(*tokFile)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-	file.WriteString(tok)
-	return tok, nil
+	return string(payload), nil
 }
 
 func subscribe(wg *sync.WaitGroup, ctx context.Context) {
@@ -114,7 +93,7 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
 				"flytrap": tok,
-			}},
+			}, MaximumPacketSize: paho.Uint32(512)},
 	})
 	if err != nil {
 		panic(err)
@@ -148,7 +127,7 @@ func publish(wg *sync.WaitGroup, ctx context.Context) {
 		KeepAlive: 5,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": tok,
+				"flytrap": "tok",
 			}},
 	})
 	if err != nil {
