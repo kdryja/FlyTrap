@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -57,22 +58,17 @@ func con(ip string) net.Conn {
 	return con
 }
 
-func obtainToken() (string, error) {
-	// First check if token already exists
-	if authToken, err := ioutil.ReadFile(*tokFile); err == nil {
-		return string(authToken), nil
-	}
+func signKey() (string, string, error) {
 	priv, err := crypto.LoadECDSA("privkey.asc")
+	if err != nil {
+		return "", "", err
+	}
 	hash := crypto.PubkeyToAddress(priv.PublicKey).Hash().Bytes()
 	sig, err := crypto.Sign(hash, priv)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	crypto.CompressPubkey(&priv.PublicKey)
-	compKey := crypto.CompressPubkey(&priv.PublicKey)
-	var payload []byte
-	payload = append(append(sig, 0x00, 0x00), compKey...)
-	return string(payload), nil
+	return base64.StdEncoding.EncodeToString(sig), base64.StdEncoding.EncodeToString(crypto.CompressPubkey(&priv.PublicKey)), nil
 }
 
 func subscribe(wg *sync.WaitGroup, ctx context.Context) {
@@ -80,20 +76,18 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 		log.Printf("Message received: %s", string(m.Payload))
 	})})
-
-	tok, err := obtainToken()
+	sig, pub, err := signKey()
 	if err != nil {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
-	log.Printf("Using following token: %s", tok)
-
 	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_SUB",
-		KeepAlive: 5,
+		KeepAlive: 10,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": tok,
-			}, MaximumPacketSize: paho.Uint32(512)},
+				"flytrap_sig": sig,
+				"flytrap_pub": pub,
+			}},
 	})
 	if err != nil {
 		panic(err)
@@ -115,19 +109,17 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 func publish(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP)})
-
-	tok, err := obtainToken()
+	sig, pub, err := signKey()
 	if err != nil {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
-
-	log.Printf("Using following token: %s", tok)
 	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_PUB",
-		KeepAlive: 5,
+		KeepAlive: 10,
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
-				"flytrap": "tok",
+				"flytrap_sig": sig,
+				"flytrap_pub": pub,
 			}},
 	})
 	if err != nil {

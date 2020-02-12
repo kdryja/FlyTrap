@@ -1,10 +1,7 @@
 pragma solidity >=0.4.22 <0.7.0;
 
-import "./authorizer.sol";
-
 contract Flytrap {
     address payable owner;
-    Authorizer public authorizer;
     uint addTopicCost;
 
     struct Topic {
@@ -17,14 +14,20 @@ contract Flytrap {
         mapping(address => bool) subscribers;
     }
 
+    enum ActionPerformed { AddTopic, AddPub, AddSub, RevokePub, RevokeSub }
+    event ACLChange (
+      address indexed _src,
+      address indexed _target,
+      ActionPerformed indexed _action,
+      bytes32 _name
+    );
+
     mapping(bytes32 => Topic) public topics;
 
     constructor(uint cost) public {
         owner = msg.sender;
         addTopicCost = cost;
-        authorizer = new Authorizer(msg.sender);
     }
-
 
     function addTopic(bytes32 topic, uint addPubCost, uint addSubCost) public payable {
         require(topics[topic].isValue == false);
@@ -36,18 +39,22 @@ contract Flytrap {
     function addPub(address person, bytes32 topic) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].publishers[person] = true;
+        emit ACLChange(msg.sender, person, ActionPerformed.AddPub, topic);
     }
     function addSub(address person, bytes32 topic) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].subscribers[person] = true;
+        emit ACLChange(msg.sender, person, ActionPerformed.AddSub, topic);
     }
     function revokePub(address person, bytes32 topic) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].publishers[person] = false;
+        emit ACLChange(msg.sender, person, ActionPerformed.RevokePub, topic);
     }
     function revokeSub(address person, bytes32 topic) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].subscribers[person] = false;
+        emit ACLChange(msg.sender, person, ActionPerformed.RevokeSub, topic);
     }
     function verifyPub(address person, bytes32 topic) public view returns (bool) {
         return topics[topic].publishers[person];

@@ -13,10 +13,9 @@ import (
 )
 
 const (
-	ADDRESS             = "http://localhost:7545"
-	SERVER_PRIVKEY      = "privkey.asc"
-	FLYTRAP_CONTRACT    = "0xa53cEaD0ABC76B24F8966E873bF3bA5dba201735"
-	AUTHORIZER_CONTRACT = "0xe260dE168679c271166E2D6081645cBe66Ba1511"
+	ADDRESS          = "http://localhost:7545"
+	SERVER_PRIVKEY   = "privkey.asc"
+	FLYTRAP_CONTRACT = "0x62C7d17A3AB60b1Be7b20610C92c817eA6b862B2"
 )
 
 type Blockchain struct {
@@ -41,35 +40,6 @@ func VerifyAccess(topic string, key common.Address, pub bool) (bool, error) {
 		return b.Instance.VerifyPub(nil, key, t)
 	}
 	return b.Instance.VerifySub(nil, key, t)
-}
-
-func RegisterToken(token string, address common.Address) error {
-	b, err := New()
-	if err != nil {
-		return err
-	}
-	t := [32]byte{}
-	copy(t[:], token)
-	inst, err := NewAuthorizer(common.HexToAddress(AUTHORIZER_CONTRACT), b.Client)
-	if err != nil {
-		return err
-	}
-	_, err = inst.RegisterToken(b.Opts, t, address)
-	return err
-}
-
-func RetrievePubkey(token string) (common.Address, error) {
-	b, err := New()
-	if err != nil {
-		return common.Address{}, err
-	}
-	t := [32]byte{}
-	copy(t[:], token)
-	inst, err := NewAuthorizer(common.HexToAddress(AUTHORIZER_CONTRACT), b.Client)
-	if err != nil {
-		return common.Address{}, err
-	}
-	return inst.RetrieveKey(nil, t)
 }
 
 func New() (*Blockchain, error) {

@@ -9,7 +9,7 @@ import (
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
-const CLIENT = "0x132944508E41FD8549657A33690325c6032AB108"
+const CLIENT = "0x641c46D43A3c552a76318c12D8Fc2839b913F32F"
 
 var (
 	contract    = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
@@ -28,16 +28,11 @@ func main() {
 	}
 	var addr common.Address
 	if *addContract {
-		addr, _, inst, err := blockchain.DeployFlytrap(b.Opts, b.Client, big.NewInt(0))
-		if err != nil {
-			log.Fatal(err)
-		}
-		authAddr, err := inst.Authorizer(nil)
+		addr, _, _, err := blockchain.DeployFlytrap(b.Opts, b.Client, big.NewInt(0))
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Printf("Generated new contract, address is: %s", addr.Hex())
-		log.Printf("Generated new authorizer, address is: %s", authAddr.Hex())
 	}
 	if *contract == "" {
 		if addr, err = b.GenerateContract(100); err != nil {

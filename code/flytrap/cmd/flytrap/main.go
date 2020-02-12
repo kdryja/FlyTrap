@@ -11,7 +11,6 @@ import (
 
 var (
 	local_port  = flag.String("p", ":8888", "Port to use for proxy server")
-	auth_port   = flag.String("a", ":8889", "Port to use for auth server")
 	mqtt_broker = flag.String("b", "test.mosquitto.org:8883", "Provide address of MQTT Broker.")
 	use_tls     = flag.Bool("tls", true, "Whether the proxy should be encrypted on both sides. You will need to provide .crt and .key files if so.")
 	server_crt  = flag.String("crt", "server.crt", "Location of your server's .crt used for TLS connection")
@@ -45,22 +44,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer mainL.Close()
-	authL, err := server(*auth_port)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer authL.Close()
 	log.Printf("Now accepting connections under %s", *local_port)
-
-	a := &flytrap.Auth{}
-	go a.Server(authL)
-
 	for {
 		c, err := mainL.Accept()
 		if err != nil {
 			log.Fatal(err)
 		}
-		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls, a)
+		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls)
 		if err != nil {
 			log.Print(err)
 		}

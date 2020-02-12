@@ -1,18 +1,17 @@
 package flytrap
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/binary"
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
 
+	"github.com/eclipse/paho.golang/packets"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
@@ -22,7 +21,6 @@ import (
 type Proxy struct {
 	dst    string
 	lc, rc net.Conn
-	a      *Auth
 }
 
 var (
@@ -31,46 +29,8 @@ var (
 	pubackDenied  = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
 )
 
-func readFull(r io.ReadCloser) ([]byte, error) {
-	// FUp to the first five bytes of the packet represent Control type and remaining length - needed to read the entire packet.
-	h := make([]byte, 1)
-	_, err := io.ReadFull(r, h)
-	if err != nil {
-		return nil, err
-	}
-
-	var varHeader []byte
-
-	multiplier := 1
-	var value int
-	for {
-		eB := make([]byte, 1)
-		_, err := io.ReadFull(r, eB)
-		if err != nil {
-			return nil, err
-		}
-		varHeader = append(varHeader, eB...)
-		b := int(eB[0])
-		value += (b & 127) * multiplier
-		if multiplier > 128*128*128 {
-			return nil, fmt.Errorf("malformed variable byte integer")
-		}
-		multiplier *= 128
-		if b&128 == 0 {
-			break
-		}
-	}
-	log.Print(value)
-
-	v := make([]byte, value)
-	_, err = io.ReadFull(r, v)
-	if err != nil {
-		return nil, err
-	}
-	return append(append(h, varHeader...), v...), nil
-}
-
 func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
+	defer ctx.Done()
 	var pubKey common.Address
 	subPerms := make(map[string]struct{})
 	pubPerms := make(map[string]struct{})
@@ -80,71 +40,43 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			return nil
 		default:
 		}
-		data, err := readFull(lc)
+		// For messages received from broker, simply send them back to client
+		recv, err := packets.ReadPacket(lc)
 		if err != nil {
 			return err
 		}
-		log.Print(hex.Dump(data))
-		var conErr error
+		switch {
 		// Check if it's CONNECT packet
-		if data[0] == 0x10 {
-			sep := []byte(PROP)
-			// Locate flytrap specific property in the payload.
-			i := bytes.Index(data, sep)
-			// -1 means that token was not found
-			if i == -1 {
-				// Write CONNACK packet to client, denying access
-				if _, err := lc.Write(connackDenied); err != nil {
-					conErr = err
-				}
-				rc.Close()
-				return fmt.Errorf("flytrap flag not provided, access denied")
+		case recv.Type == packets.CONNECT:
+			conPack := recv.Content.(*packets.Connect)
+			sigEncoded, ok := conPack.Properties.User["flytrap_sig"]
+			if !ok {
+				return fmt.Errorf("flytrap signature not provided")
 			}
-			// Location of the secret key / value property.
-			loc := i + len(sep)
-			keyLen := binary.BigEndian.Uint16(data[loc : loc+2])
-			log.Print(keyLen)
-			sigBytes := make([]byte, keyLen)
-			copy(sigBytes, data[loc+2:loc+2+int(keyLen)])
-			// Attempting to split the payload into signature and compressed public key
-			received := bytes.SplitN(sigBytes, []byte{0x00, 0x00}, 2)
-			log.Printf("%s", sigBytes)
-			sig := received[0]
-			pubBytes, err := crypto.DecompressPubkey(received[1])
+			sig, err := base64.StdEncoding.DecodeString(sigEncoded)
 			if err != nil {
-				conErr = err
+				return err
 			}
-			sigPub := crypto.PubkeyToAddress(*pubBytes)
-			pub, err := crypto.SigToPub(sigPub.Hash().Bytes(), sig)
+			pubCompressedEncoded, ok := conPack.Properties.User["flytrap_pub"]
+			if !ok {
+				return fmt.Errorf("flytrap public key not provided")
+			}
+			pubCompressed, err := base64.StdEncoding.DecodeString(pubCompressedEncoded)
 			if err != nil {
-				conErr = err
+				return err
 			}
-			if crypto.PubkeyToAddress(*pub) != sigPub {
-				conErr = fmt.Errorf("signature was forged")
+			pub, err := crypto.DecompressPubkey(pubCompressed)
+			if err != nil {
+				return err
 			}
-			log.Printf("Provided pubkey: %s", sigPub.String())
-			pubKey = sigPub
-		}
-		// Verifying provided pubkey failed, cancelling proxy
-		if conErr != nil {
-			lc.Write(connackDenied)
-			rc.Close()
-			return conErr
-		}
+			if ok := crypto.VerifySignature(crypto.FromECDSAPub(pub), crypto.PubkeyToAddress(*pub).Hash().Bytes(), sig[:len(sig)-1]); !ok {
+				return fmt.Errorf("public key signature check failed")
+			}
+			pubKey = crypto.PubkeyToAddress(*pub)
 		// Check if it's SUBSCRIBE packet
-		if data[0]&0xf0 == 0x80 {
-			topics := []string{}
-			propertyLen := binary.BigEndian.Uint16(data[2:4])
-			start := propertyLen + 4
-			for {
-				topicLen := binary.BigEndian.Uint16(data[start : start+2])
-				topics = append(topics, string(data[start+2:start+2+topicLen]))
-				start = start + 3 + topicLen
-				if int(start) == len(data) {
-					break
-				}
-			}
-			for _, topic := range topics {
+		case recv.Type == packets.SUBSCRIBE:
+			subPack := recv.Content.(*packets.Subscribe)
+			for topic, _ := range subPack.Subscriptions {
 				// Check if permission was already verified, if so, skip blockchain communication, as it's costly
 				if _, ok := subPerms[topic]; ok {
 					log.Printf("Client %q was authorised to subscribe to topic %q", pubKey.String(), topic)
@@ -167,11 +99,10 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 					return err
 				}
 			}
-		}
-		// Check if it's PUBLISH packet, coming from the client
-		if data[0]&0xf0 == 0x30 && p.lc == lc {
-			topLen := data[3+data[2]]
-			topic := string(data[4+data[2] : 4+data[2]+topLen])
+		// Check if it's PUBLISH packet
+		case recv.Type == packets.PUBLISH && p.lc == lc:
+			pubPack := recv.Content.(*packets.Publish)
+			topic := pubPack.Topic
 			// Check if permission was already verified, if so, skip blockchain communication, as it's costly
 			if _, ok := pubPerms[topic]; !ok {
 				ok, err := blockchain.VerifyAccess(topic, pubKey, true)
@@ -191,16 +122,15 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			pubPerms[topic] = struct{}{}
 			log.Printf("Client %q was authorised to publish to topic %q", pubKey.String(), topic)
 		}
-		log.Print("writing response now")
-		if _, err := rc.Write(data); err != nil {
+		if _, err := recv.Content.WriteTo(rc); err != nil {
 			return err
 		}
 	}
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool, a *Auth) (*Proxy, error) {
-	p := &Proxy{dst: dst, lc: c, a: a}
+func New(dst string, c net.Conn, s bool) (*Proxy, error) {
+	p := &Proxy{dst: dst, lc: c}
 	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
