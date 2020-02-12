@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/eclipse/paho.golang/paho"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (
@@ -61,7 +63,32 @@ func obtainToken() (string, error) {
 	if authToken, err := ioutil.ReadFile(*tokFile); err == nil {
 		return string(authToken), nil
 	}
-	// Otherwise, use public key to request a new token
+
+	priv, err := crypto.LoadECDSA("privkey.asc")
+	hash := crypto.PubkeyToAddress(priv.PublicKey).Hash().Bytes()
+	sig, err := crypto.Sign(hash, priv)
+	if err != nil {
+		return "", err
+	}
+	crypto.CompressPubkey(&priv.PublicKey)
+	compKey := crypto.CompressPubkey(&priv.PublicKey)
+	var payload []byte
+	payload = append(append(sig, 0x00, 0x00), compKey...)
+
+	received := bytes.SplitN(payload, []byte{0x00, 0x00}, 2)
+	sig2 := received[0]
+	rKey, err := crypto.DecompressPubkey(received[1])
+	if err != nil {
+		return "", err
+	}
+	hash2 := crypto.PubkeyToAddress(*rKey).Hash().Bytes()
+	pub, err := crypto.SigToPub(hash2, sig2)
+	if err != nil {
+		return "", err
+	}
+	log.Print(crypto.PubkeyToAddress(*rKey) == crypto.PubkeyToAddress(*pub))
+	return "", nil
+
 	c := con(*authIP)
 	defer c.Close()
 	c.Write([]byte(*publicKey))
@@ -95,6 +122,7 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
 	log.Printf("Using following token: %s", tok)
+	os.Exit(1)
 
 	_, err = c.Connect(ctx, &paho.Connect{
 		ClientID:  *cID + "_SUB",

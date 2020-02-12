@@ -5,11 +5,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
@@ -33,21 +35,37 @@ func generateToken() (string, error) {
 func (a *Auth) issue(c net.Conn) {
 	defer c.Close()
 	log.Print("New token request")
-	t := make([]byte, 256)
-	n, err := c.Read(t)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	t = t[:n]
+	tok, err := func() (string, error) {
+		t := make([]byte, 256)
+		n, err := c.Read(t)
+		if err != nil {
+			return "", err
+		}
+		t = t[:n]
 
-	tok, err := generateToken()
+		// Attempting to split the payload into signature and compressed public key
+		received := bytes.SplitN(t, []byte{0x00, 0x00}, 2)
+		sig := received[0]
+		pubBytes, err := crypto.DecompressPubkey(received[1])
+		if err != nil {
+			return "", err
+		}
+		sigPub := crypto.PubkeyToAddress(*pubBytes)
+		pub, err := crypto.SigToPub(sigPub.Hash().Bytes(), sig)
+		if err != nil {
+			return "", err
+		}
+		if crypto.PubkeyToAddress(*pub) != sigPub {
+			return "", fmt.Errorf("attempted forged signature submission")
+		}
+		tok, err := generateToken()
+		if err != nil {
+			return "", err
+		}
+		log.Printf("Provided pubkey: %s", sigPub.String())
+		return tok, blockchain.RegisterToken(tok, common.HexToAddress(sigPub.String()))
+	}()
 	if err != nil {
-		log.Print(err)
-		return
-	}
-	log.Printf("Provided pubkey: %s", t)
-	if err := blockchain.RegisterToken(tok, common.HexToAddress(string(t))); err != nil {
 		log.Printf("Registration of new token has failed with: %q", err)
 		c.Write([]byte("FAIL"))
 		return
