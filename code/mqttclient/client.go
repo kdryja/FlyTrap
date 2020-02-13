@@ -25,16 +25,14 @@ const (
 )
 
 var (
-	connIP    = flag.String("ip", "localhost:8888", "location of MQTT broker")
-	authIP    = flag.String("auth", "localhost:8889", "location of auth server")
-	connTls   = flag.Bool("tls", true, "whether to use TLS")
-	pub       = flag.Bool("pub", false, "Whether to publish")
-	sub       = flag.Bool("sub", false, "Whether to subscribe")
-	pubMsg    = flag.String("msg", "Here Be Dragons", "message to be published")
-	topic     = flag.String("topic", "MyTopic", "Topic for use for pub/sub")
-	cID       = flag.String("id", "ClientID", "ID of connecting client")
-	publicKey = flag.String("key", "0x641c46D43A3c552a76318c12D8Fc2839b913F32F", "Provide public key for Ethereum wallet")
-	tokFile   = flag.String("tok", "token.txt", "Location of your authentication token")
+	connIP  = flag.String("ip", "localhost:8888", "location of MQTT broker")
+	authIP  = flag.String("auth", "localhost:8889", "location of auth server")
+	connTls = flag.Bool("tls", true, "whether to use TLS")
+	pub     = flag.Int("pub", 0, "How many messages to publish")
+	sub     = flag.Int("sub", 0, "How many messages to receive via subscription")
+	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
+	topic   = flag.String("topic", "MyTopic", "Topic for use for pub/sub")
+	cID     = flag.String("id", "ClientID", "ID of connecting client")
 )
 
 func con(ip string) net.Conn {
@@ -73,10 +71,15 @@ func signKey() (string, string, error) {
 
 func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
+	pubCtx, cancel := context.WithCancel(context.Background())
+	count := 0
 	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP), Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 		log.Printf("Message received: %s", string(m.Payload))
+		if count += 1; count > *sub-1 {
+			cancel()
+		}
 	})})
-	sig, pub, err := signKey()
+	sig, pubKey, err := signKey()
 	if err != nil {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
@@ -86,30 +89,31 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
 				"flytrap_sig": sig,
-				"flytrap_pub": pub,
+				"flytrap_pub": pubKey,
 			}},
 	})
 	if err != nil {
 		panic(err)
 	}
 	defer c.Disconnect(&paho.Disconnect{})
-	sub := paho.Subscribe{Subscriptions: map[string]paho.SubscribeOptions{
+	subPaho := paho.Subscribe{Subscriptions: map[string]paho.SubscribeOptions{
 		*topic: paho.SubscribeOptions{QoS: 0},
 	}}
-	_, err = c.Subscribe(ctx, &sub)
+	_, err = c.Subscribe(ctx, &subPaho)
 	if err != nil {
 		panic(err)
 	}
 	select {
 	case <-ctx.Done():
 		log.Print("Disconnecting Subscriber...")
-		return
+	case <-pubCtx.Done():
+		log.Printf("Received %d messages, as requested, disconnecting", *sub)
 	}
 }
 func publish(wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
 	c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP)})
-	sig, pub, err := signKey()
+	sig, pubKey, err := signKey()
 	if err != nil {
 		log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
 	}
@@ -119,15 +123,14 @@ func publish(wg *sync.WaitGroup, ctx context.Context) {
 		Properties: &paho.ConnectProperties{
 			User: map[string]string{
 				"flytrap_sig": sig,
-				"flytrap_pub": pub,
+				"flytrap_pub": pubKey,
 			}},
 	})
 	if err != nil {
 		panic(err)
 	}
 	defer c.Disconnect(&paho.Disconnect{})
-	i := 1
-	for {
+	for i := 0; i < *pub; i++ {
 		select {
 		case <-ctx.Done():
 			log.Print("Disconnecting Publisher...")
@@ -140,9 +143,9 @@ func publish(wg *sync.WaitGroup, ctx context.Context) {
 		if err != nil {
 			panic(err)
 		}
-		i += 1
 		time.Sleep(time.Second)
 	}
+	log.Printf("Published %d messages, as requested, disconnecting", *pub)
 }
 func main() {
 	flag.Parse()
@@ -150,19 +153,22 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
 
-	if *pub {
+	if *pub > 0 {
 		wg.Add(1)
 		go publish(wg, ctx)
 	}
-	if *sub {
+	if *sub > 0 {
 		wg.Add(1)
 		go subscribe(wg, ctx)
 	}
-
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs, syscall.SIGINT)
-	<-sigs
-	log.Print("Received SIGINT, disconnecting clients...")
-	cancel()
+	go func() {
+		select {
+		case <-sigs:
+			log.Print("Received SIGINT, disconnecting clients...")
+			cancel()
+		}
+	}()
 	wg.Wait()
 }

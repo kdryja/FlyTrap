@@ -12,16 +12,37 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+type Action int
+
 const (
 	ADDRESS          = "http://localhost:7545"
 	SERVER_PRIVKEY   = "privkey.asc"
-	FLYTRAP_CONTRACT = "0x62C7d17A3AB60b1Be7b20610C92c817eA6b862B2"
+	FLYTRAP_CONTRACT = "0xAE447730C5296f30a7ba64276F4741104bE228a3"
 )
 
+// Blockchain is a struct containing runtime parameters used for communication with blockchain
 type Blockchain struct {
 	Instance *Flytrap
 	Opts     *bind.TransactOpts
 	Client   *ethclient.Client
+}
+
+// Event is a struct containing data about event emitted on blockchain
+type Event struct {
+	Name      [32]byte
+	From      common.Address
+	To        common.Address
+	Timestamp *big.Int
+	Action    *big.Int
+}
+
+// ActionMap shows a map of individual int value to textual description of performed action
+var ActionMap = map[int64]string{
+	0: "AddTopic",
+	1: "AddPub",
+	2: "AddSub",
+	3: "RevokePub",
+	4: "RevokeSub",
 }
 
 // VerifyAccess function will inspect smart contract to determine whether the provided public key can publish / subscribe to given topic.

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net"
+	"sync"
 
 	"github.com/kdryja/thesis/code/flytrap"
 )
@@ -45,12 +46,13 @@ func main() {
 	}
 	defer mainL.Close()
 	log.Printf("Now accepting connections under %s", *local_port)
+	cache := flytrap.Cache{Perms: &sync.Map{}}
 	for {
 		c, err := mainL.Accept()
 		if err != nil {
 			log.Fatal(err)
 		}
-		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls)
+		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls, &cache)
 		if err != nil {
 			log.Print(err)
 		}

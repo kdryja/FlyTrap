@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"sync"
 
 	"github.com/eclipse/paho.golang/packets"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,9 +19,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type Cache struct {
+	Perms *sync.Map
+}
+
 type Proxy struct {
 	dst    string
 	lc, rc net.Conn
+	cache  *Cache
 }
 
 var (
@@ -29,11 +35,23 @@ var (
 	pubackDenied  = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
 )
 
+func (p *Proxy) verifyAccess(pubKey common.Address, topic string, mask byte) (bool, byte, *sync.Map, error) {
+	v, _ := p.cache.Perms.LoadOrStore(topic, new(sync.Map))
+	permMap, ok := v.(*sync.Map)
+	if !ok {
+		return false, 0, nil, fmt.Errorf("sync.Map not found in cache")
+	}
+	result, ok := permMap.LoadOrStore(pubKey, byte(0))
+	resultByte, ok := result.(byte)
+	if !ok {
+		return false, 0, nil, fmt.Errorf("non-byte value found in permission map")
+	}
+	return ok && resultByte&mask == mask, resultByte, permMap, nil
+}
+
 func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 	defer ctx.Done()
 	var pubKey common.Address
-	subPerms := make(map[string]struct{})
-	pubPerms := make(map[string]struct{})
 	for {
 		select {
 		case <-ctx.Done():
@@ -77,22 +95,25 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 		case recv.Type == packets.SUBSCRIBE:
 			subPack := recv.Content.(*packets.Subscribe)
 			for topic, _ := range subPack.Subscriptions {
-				// Check if permission was already verified, if so, skip blockchain communication, as it's costly
-				if _, ok := subPerms[topic]; ok {
-					log.Printf("Client %q was authorised to subscribe to topic %q", pubKey.String(), topic)
+				cached, resultByte, permMap, err := p.verifyAccess(pubKey, topic, 2)
+				if err != nil {
+					return err
+				}
+				if cached {
+					log.Printf("Client %q was already authorised to subscribe to topic %q", pubKey.String(), topic)
 					continue
 				}
 				ok, err := blockchain.VerifyAccess(topic, pubKey, false)
 				if err != nil {
 					return err
 				}
-				// Check if pubkey is authorized to sub to given topic
+				// Check with blockchain if pubkey is authorized to sub to given topic
 				if ok {
-					// Cache the result for future requests
-					subPerms[topic] = struct{}{}
+					permMap.Store(pubKey, resultByte|2)
 					log.Printf("Client %q was authorised to subscribe to topic %q", pubKey.String(), topic)
 					continue
 				}
+
 				log.Printf("Client %q attempted subscribe to topic %q and was denied due to insufficient permission", pubKey.String(), topic)
 				// Write SUBACK packet to client, denying access
 				if _, err := lc.Write(subackDenied); err != nil {
@@ -104,22 +125,28 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			pubPack := recv.Content.(*packets.Publish)
 			topic := pubPack.Topic
 			// Check if permission was already verified, if so, skip blockchain communication, as it's costly
-			if _, ok := pubPerms[topic]; !ok {
-				ok, err := blockchain.VerifyAccess(topic, pubKey, true)
-				if err != nil {
+			cached, resultByte, permMap, err := p.verifyAccess(pubKey, topic, 1)
+			if err != nil {
+				return err
+			}
+			if cached {
+				log.Printf("Client %q was already authorised to publish to topic %q", pubKey.String(), topic)
+				break
+			}
+			ok, err := blockchain.VerifyAccess(topic, pubKey, true)
+			if err != nil {
+				return err
+			}
+			// Check if pubkey is authorized to publish to given topic
+			if !ok {
+				log.Printf("Client %q attempted publish to topic %q and was denied due to insufficient permission", pubKey.String(), topic)
+				// Write PUBACK packet to client, denying access
+				if _, err := lc.Write(pubackDenied); err != nil {
 					return err
 				}
-				// Check if pubkey is authorized to publish to given topic
-				if !ok {
-					log.Printf("Client %q attempted publish to topic %q and was denied due to insufficient permission", pubKey.String(), topic)
-					// Write PUBACK packet to client, denying access
-					if _, err := lc.Write(pubackDenied); err != nil {
-						return err
-					}
-				}
 			}
+			permMap.Store(pubKey, resultByte|1)
 			// Cache the result for future requests
-			pubPerms[topic] = struct{}{}
 			log.Printf("Client %q was authorised to publish to topic %q", pubKey.String(), topic)
 		}
 		if _, err := recv.Content.WriteTo(rc); err != nil {
@@ -129,8 +156,8 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool) (*Proxy, error) {
-	p := &Proxy{dst: dst, lc: c}
+func New(dst string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
+	p := &Proxy{dst: dst, lc: c, cache: ca}
 	var err error
 	if s {
 		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
