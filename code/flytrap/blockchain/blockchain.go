@@ -12,13 +12,23 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type Action int
-
 const (
 	ADDRESS          = "http://localhost:7545"
 	SERVER_PRIVKEY   = "privkey.asc"
-	FLYTRAP_CONTRACT = "0xAE447730C5296f30a7ba64276F4741104bE228a3"
+	FLYTRAP_CONTRACT = "0xD1d784F247a60b119d555fe1eC913886D28A9eaE"
 )
+
+const (
+	AddTopic = iota
+	AddPub
+	AddSub
+	RevokePub
+	RevokeSub
+	WrongCountry
+	FiveFailures
+)
+
+type Action int
 
 // Blockchain is a struct containing runtime parameters used for communication with blockchain
 type Blockchain struct {
@@ -33,34 +43,62 @@ type Event struct {
 	From      common.Address
 	To        common.Address
 	Timestamp *big.Int
-	Action    *big.Int
+	Action
 }
 
-// ActionMap shows a map of individual int value to textual description of performed action
-var ActionMap = map[int64]string{
-	0: "AddTopic",
-	1: "AddPub",
-	2: "AddSub",
-	3: "RevokePub",
-	4: "RevokeSub",
+func (a Action) String() string {
+	actions := [...]string{
+		"AddTopic",
+		"AddPub",
+		"AddSub",
+		"RevokePub",
+		"RevokeSub",
+		"WrongCountry",
+		"FiveFailures",
+	}
+	return actions[a]
 }
 
 // VerifyAccess function will inspect smart contract to determine whether the provided public key can publish / subscribe to given topic.
-func VerifyAccess(topic string, key common.Address, pub bool) (bool, error) {
+func VerifyAccess(topic string, key common.Address, country [2]byte, pub bool) (bool, error) {
 	b, err := New()
 	if err != nil {
 		return false, err
 	}
 	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
-
 		return false, err
 	}
 	t := [32]byte{}
 	copy(t[:], topic)
+	var ok bool
+	var storedCountry [2]byte
 	if pub {
-		return b.Instance.VerifyPub(nil, key, t)
+		ok, storedCountry, err = b.Instance.VerifyPub(nil, key, t)
 	}
-	return b.Instance.VerifySub(nil, key, t)
+	ok, storedCountry, err = b.Instance.VerifyPub(nil, key, t)
+	if country != storedCountry {
+		copy(t[:], fmt.Sprintf("want: %s, got %s", storedCountry, country))
+		if _, err := b.Instance.LogAlert(b.Opts, key, uint8(WrongCountry), t); err != nil {
+			return false, err
+		}
+	}
+	return ok && country == storedCountry, err
+}
+
+func PersistentLog(reason Action, key common.Address, topic string) error {
+	b, err := New()
+	if err != nil {
+		return err
+	}
+	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
+		return err
+	}
+	t := [32]byte{}
+	copy(t[:], topic)
+	if _, err := b.Instance.LogAlert(b.Opts, key, uint8(reason), t); err != nil {
+		return err
+	}
+	return nil
 }
 
 func New() (*Blockchain, error) {

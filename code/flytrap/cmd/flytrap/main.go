@@ -46,7 +46,7 @@ func main() {
 	}
 	defer mainL.Close()
 	log.Printf("Now accepting connections under %s", *local_port)
-	cache := flytrap.Cache{Perms: &sync.Map{}}
+	cache := flytrap.Cache{Perms: &sync.Map{}, BanList: &sync.Map{}, FailedTries: &sync.Map{}}
 	for {
 		c, err := mainL.Accept()
 		if err != nil {
@@ -55,6 +55,7 @@ func main() {
 		proxy, err := flytrap.New(*mqtt_broker, c, *use_tls, &cache)
 		if err != nil {
 			log.Print(err)
+			continue
 		}
 		go proxy.Handle()
 	}

@@ -28,13 +28,14 @@ var (
 )
 
 // FlytrapABI is the input ABI used to generate the binding from.
-const FlytrapABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"cost\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_src\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_target\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enumFlytrap.ActionPerformed\",\"name\":\"_action\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"_name\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_timestamp\",\"type\":\"uint256\"}],\"name\":\"ACLChange\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"addPub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"addSub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"addPubCost\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"addSubCost\",\"type\":\"uint256\"}],\"name\":\"addTopic\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"revokePub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"revokeSub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"topics\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"isValue\",\"type\":\"bool\"},{\"internalType\":\"bytes32\",\"name\":\"name\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"addPubCost\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"addSubCost\",\"type\":\"uint256\"},{\"internalType\":\"addresspayable\",\"name\":\"owner\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"verifyPub\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"verifySub\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const FlytrapABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"cost\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_src\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_target\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enumFlytrap.ActionPerformed\",\"name\":\"_action\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"_name\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_timestamp\",\"type\":\"uint256\"}],\"name\":\"ACLChange\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"addPub\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"addSub\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"},{\"internalType\":\"bytes2\",\"name\":\"country\",\"type\":\"bytes2\"},{\"internalType\":\"uint256\",\"name\":\"addPubCost\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"addSubCost\",\"type\":\"uint256\"}],\"name\":\"addTopic\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"enumFlytrap.ActionPerformed\",\"name\":\"alert\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"desc\",\"type\":\"bytes32\"}],\"name\":\"logAlert\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"revokePub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"revokeSub\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"topics\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"isValue\",\"type\":\"bool\"},{\"internalType\":\"bytes32\",\"name\":\"name\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"addPubCost\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"addSubCost\",\"type\":\"uint256\"},{\"internalType\":\"addresspayable\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"bytes2\",\"name\":\"country\",\"type\":\"bytes2\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"verifyPub\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"bytes2\",\"name\":\"\",\"type\":\"bytes2\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"person\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"topic\",\"type\":\"bytes32\"}],\"name\":\"verifySub\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"bytes2\",\"name\":\"\",\"type\":\"bytes2\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // FlytrapFuncSigs maps the 4-byte function signature to its string representation.
 var FlytrapFuncSigs = map[string]string{
 	"37bb1812": "addPub(address,bytes32)",
 	"c6c460f7": "addSub(address,bytes32)",
-	"0c921708": "addTopic(bytes32,uint256,uint256)",
+	"31a0a410": "addTopic(bytes32,bytes2,uint256,uint256)",
+	"7bd7b2ac": "logAlert(address,uint8,bytes32)",
 	"8b99d3f8": "revokePub(address,bytes32)",
 	"16ce2894": "revokeSub(address,bytes32)",
 	"0f2fbeec": "topics(bytes32)",
@@ -43,7 +44,7 @@ var FlytrapFuncSigs = map[string]string{
 }
 
 // FlytrapBin is the compiled bytecode used for deploying new contracts.
-var FlytrapBin = "0x608060405234801561001057600080fd5b506040516106783803806106788339818101604052602081101561003357600080fd5b5051600080546001600160a01b0319163317905560015561061f806100596000396000f3fe60806040526004361061007b5760003560e01c80637d1bae0a1161004e5780637d1bae0a1461017d5780638b99d3f8146101ca578063c6c460f714610203578063d1d4a7711461023c5761007b565b80630c921708146100805780630f2fbeec146100ab57806316ce28941461010b57806337bb181214610144575b600080fd5b6100a96004803603606081101561009657600080fd5b5080359060208101359060400135610275565b005b3480156100b757600080fd5b506100d5600480360360208110156100ce57600080fd5b503561039c565b60408051951515865260208601949094528484019290925260608401526001600160a01b03166080830152519081900360a00190f35b34801561011757600080fd5b506100a96004803603604081101561012e57600080fd5b506001600160a01b0381351690602001356103d8565b34801561015057600080fd5b506100a96004803603604081101561016757600080fd5b506001600160a01b038135169060200135610479565b34801561018957600080fd5b506101b6600480360360408110156101a057600080fd5b506001600160a01b0381351690602001356104d7565b604080519115158252519081900360200190f35b3480156101d657600080fd5b506100a9600480360360408110156101ed57600080fd5b506001600160a01b038135169060200135610505565b34801561020f57600080fd5b506100a96004803603604081101561022657600080fd5b506001600160a01b03813516906020013561055f565b34801561024857600080fd5b506101b66004803603604081101561025f57600080fd5b506001600160a01b0381351690602001356105bb565b60008381526002602052604090205460ff161561029157600080fd5b6001543410156102a057600080fd5b6040805160a0810182526001808252602080830187815283850187815260608501878152336080870190815260008b81526002958690528881209751885460ff1916901515178855935195870195909555905192850192909255905160038401559051600490920180546001600160a01b0319166001600160a01b039384161790558054925192909116916108fc3480159190910292909190818181858888f19350505050158015610356573d6000803e3d6000fd5b506000604080518581524260208201528151339283927f8866e5b4c1d0cc6912c273f44188b035e935ede829489860f0c8bae1d1f8c570929081900390910190a4505050565b60026020819052600091825260409091208054600182015492820154600383015460049093015460ff909216939290916001600160a01b031685565b6000818152600260205260409020600401546001600160a01b031633146103fe57600080fd5b60008181526002602090815260408083206001600160a01b03861684526006019091529020805460ff1916905560045b6040805183815242602082015281516001600160a01b0386169233927f8866e5b4c1d0cc6912c273f44188b035e935ede829489860f0c8bae1d1f8c570929081900390910190a45050565b6000818152600260205260409020600401546001600160a01b0316331461049f57600080fd5b60008181526002602090815260408083206001600160a01b03861684526005019091529020805460ff1916600190811790915561042e565b60009081526002602090815260408083206001600160a01b0394909416835260059093019052205460ff1690565b6000818152600260205260409020600401546001600160a01b0316331461052b57600080fd5b60008181526002602090815260408083206001600160a01b03861684526005019091529020805460ff19169055600361042e565b6000818152600260205260409020600401546001600160a01b0316331461058557600080fd5b60008181526002602081815260408084206001600160a01b0387168552600601909152909120805460ff1916600117905561042e565b60009081526002602090815260408083206001600160a01b0394909416835260069093019052205460ff169056fea26469706673582212209c5f8ffa8ea131ab3a988473361cb0aa61e8b528cc4a9e7d753a45ea4fcbd38b64736f6c63430006020033"
+var FlytrapBin = "0x608060405234801561001057600080fd5b506040516108da3803806108da8339818101604052602081101561003357600080fd5b5051600080546001600160a01b03191633179055600155610881806100596000396000f3fe6080604052600436106100865760003560e01c80637bd7b2ac116100595780637bd7b2ac1461019d5780637d1bae0a146101df5780638b99d3f81461023c578063c6c460f714610275578063d1d4a771146102a157610086565b80630f2fbeec1461008b57806316ce2894146100fd57806331a0a4101461013857806337bb181214610171575b600080fd5b34801561009757600080fd5b506100b5600480360360208110156100ae57600080fd5b50356102da565b60408051961515875260208701959095528585019390935260608501919091526001600160a01b031660808401526001600160f01b03191660a0830152519081900360c00190f35b34801561010957600080fd5b506101366004803603604081101561012057600080fd5b506001600160a01b038135169060200135610322565b005b6101366004803603608081101561014e57600080fd5b508035906001600160f01b031960208201351690604081013590606001356103c3565b6101366004803603604081101561018757600080fd5b506001600160a01b038135169060200135610529565b3480156101a957600080fd5b50610136600480360360608110156101c057600080fd5b506001600160a01b038135169060ff602082013516906040013561061a565b3480156101eb57600080fd5b506102186004803603604081101561020257600080fd5b506001600160a01b038135169060200135610672565b6040805192151583526001600160f01b031990911660208301528051918290030190f35b34801561024857600080fd5b506101366004803603604081101561025f57600080fd5b506001600160a01b0381351690602001356106ba565b6101366004803603604081101561028b57600080fd5b506001600160a01b038135169060200135610714565b3480156102ad57600080fd5b50610218600480360360408110156102c457600080fd5b506001600160a01b038135169060200135610803565b60026020819052600091825260409091208054600182015492820154600383015460049093015460ff909216939290916001600160a01b03811690600160a01b900460f01b86565b6000818152600260205260409020600401546001600160a01b0316331461034857600080fd5b60008181526002602090815260408083206001600160a01b03861684526006019091529020805460ff1916905560045b6040805183815242602082015281516001600160a01b0386169233927f8866e5b4c1d0cc6912c273f44188b035e935ede829489860f0c8bae1d1f8c570929081900390910190a45050565b60008481526002602052604090205460ff16156103df57600080fd5b6001543410156103ee57600080fd5b6040805160c081018252600180825260208083018881528385018781526060850187815233608087019081526001600160f01b03198b1660a0880190815260008d8152600296879052989098209651875490151560ff19909116178755925186860155905192850192909255905160038401555160049092018054935160f01c600160a01b0261ffff60a01b196001600160a01b03949094166001600160a01b0319909516949094179290921692909217905554156104e357600080546040516001600160a01b03909116913480156108fc02929091818181858888f193505050501580156104e1573d6000803e3d6000fd5b505b6000604080518681524260208201528151339283927f8866e5b4c1d0cc6912c273f44188b035e935ede829489860f0c8bae1d1f8c570929081900390910190a450505050565b6000818152600260205260409020600401546001600160a01b031633148061056257506000818152600260208190526040909120015415155b61056b57600080fd5b6000818152600260208190526040909120015434101561058a57600080fd5b60008181526002602081815260408084206001600160a01b0387168552600581018352908420805460ff1916600117905592849052819052015415610613576000818152600260205260408082206004015490516001600160a01b03909116913480156108fc02929091818181858888f19350505050158015610611573d6000803e3d6000fd5b505b6001610378565b81600681111561062657fe5b6040805183815242602082015281516001600160a01b0387169233927f8866e5b4c1d0cc6912c273f44188b035e935ede829489860f0c8bae1d1f8c570929081900390910190a4505050565b60008181526002602081815260408084206001600160a01b0396909616845260058601825283205493909252905260049091015460ff90911691600160a01b90910460f01b90565b6000818152600260205260409020600401546001600160a01b031633146106e057600080fd5b60008181526002602090815260408083206001600160a01b03861684526005019091529020805460ff191690556003610378565b6000818152600260205260409020600401546001600160a01b031633148061074c575060008181526002602052604090206003015415155b61075557600080fd5b60008181526002602052604090206003015434101561077357600080fd5b60008181526002602081815260408084206001600160a01b0387168552600681018352908420805460ff19166001179055928490525260030154156107fc576000818152600260205260408082206004015490516001600160a01b03909116913480156108fc02929091818181858888f193505050501580156107fa573d6000803e3d6000fd5b505b6002610378565b60008181526002602081815260408084206001600160a01b0396909616845260068601825283205493909252905260049091015460ff90911691600160a01b90910460f01b9056fea26469706673582212203da5e6a40f53fd880444dafd2b4274fd57f0d232188673cad67bf4f75a85830e64736f6c63430006020033"
 
 // DeployFlytrap deploys a new Ethereum contract, binding an instance of Flytrap to it.
 func DeployFlytrap(auth *bind.TransactOpts, backend bind.ContractBackend, cost *big.Int) (common.Address, *types.Transaction, *Flytrap, error) {
@@ -203,13 +204,14 @@ func (_Flytrap *FlytrapTransactorRaw) Transact(opts *bind.TransactOpts, method s
 
 // Topics is a free data retrieval call binding the contract method 0x0f2fbeec.
 //
-// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner)
+// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner, bytes2 country)
 func (_Flytrap *FlytrapCaller) Topics(opts *bind.CallOpts, arg0 [32]byte) (struct {
 	IsValue    bool
 	Name       [32]byte
 	AddPubCost *big.Int
 	AddSubCost *big.Int
 	Owner      common.Address
+	Country    [2]byte
 }, error) {
 	ret := new(struct {
 		IsValue    bool
@@ -217,6 +219,7 @@ func (_Flytrap *FlytrapCaller) Topics(opts *bind.CallOpts, arg0 [32]byte) (struc
 		AddPubCost *big.Int
 		AddSubCost *big.Int
 		Owner      common.Address
+		Country    [2]byte
 	})
 	out := ret
 	err := _Flytrap.contract.Call(opts, out, "topics", arg0)
@@ -225,79 +228,89 @@ func (_Flytrap *FlytrapCaller) Topics(opts *bind.CallOpts, arg0 [32]byte) (struc
 
 // Topics is a free data retrieval call binding the contract method 0x0f2fbeec.
 //
-// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner)
+// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner, bytes2 country)
 func (_Flytrap *FlytrapSession) Topics(arg0 [32]byte) (struct {
 	IsValue    bool
 	Name       [32]byte
 	AddPubCost *big.Int
 	AddSubCost *big.Int
 	Owner      common.Address
+	Country    [2]byte
 }, error) {
 	return _Flytrap.Contract.Topics(&_Flytrap.CallOpts, arg0)
 }
 
 // Topics is a free data retrieval call binding the contract method 0x0f2fbeec.
 //
-// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner)
+// Solidity: function topics(bytes32 ) constant returns(bool isValue, bytes32 name, uint256 addPubCost, uint256 addSubCost, address owner, bytes2 country)
 func (_Flytrap *FlytrapCallerSession) Topics(arg0 [32]byte) (struct {
 	IsValue    bool
 	Name       [32]byte
 	AddPubCost *big.Int
 	AddSubCost *big.Int
 	Owner      common.Address
+	Country    [2]byte
 }, error) {
 	return _Flytrap.Contract.Topics(&_Flytrap.CallOpts, arg0)
 }
 
 // VerifyPub is a free data retrieval call binding the contract method 0x7d1bae0a.
 //
-// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapCaller) VerifyPub(opts *bind.CallOpts, person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapCaller) VerifyPub(opts *bind.CallOpts, person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	var (
 		ret0 = new(bool)
+		ret1 = new([2]byte)
 	)
-	out := ret0
+	out := &[]interface{}{
+		ret0,
+		ret1,
+	}
 	err := _Flytrap.contract.Call(opts, out, "verifyPub", person, topic)
-	return *ret0, err
+	return *ret0, *ret1, err
 }
 
 // VerifyPub is a free data retrieval call binding the contract method 0x7d1bae0a.
 //
-// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapSession) VerifyPub(person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapSession) VerifyPub(person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	return _Flytrap.Contract.VerifyPub(&_Flytrap.CallOpts, person, topic)
 }
 
 // VerifyPub is a free data retrieval call binding the contract method 0x7d1bae0a.
 //
-// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapCallerSession) VerifyPub(person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifyPub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapCallerSession) VerifyPub(person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	return _Flytrap.Contract.VerifyPub(&_Flytrap.CallOpts, person, topic)
 }
 
 // VerifySub is a free data retrieval call binding the contract method 0xd1d4a771.
 //
-// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapCaller) VerifySub(opts *bind.CallOpts, person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapCaller) VerifySub(opts *bind.CallOpts, person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	var (
 		ret0 = new(bool)
+		ret1 = new([2]byte)
 	)
-	out := ret0
+	out := &[]interface{}{
+		ret0,
+		ret1,
+	}
 	err := _Flytrap.contract.Call(opts, out, "verifySub", person, topic)
-	return *ret0, err
+	return *ret0, *ret1, err
 }
 
 // VerifySub is a free data retrieval call binding the contract method 0xd1d4a771.
 //
-// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapSession) VerifySub(person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapSession) VerifySub(person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	return _Flytrap.Contract.VerifySub(&_Flytrap.CallOpts, person, topic)
 }
 
 // VerifySub is a free data retrieval call binding the contract method 0xd1d4a771.
 //
-// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool)
-func (_Flytrap *FlytrapCallerSession) VerifySub(person common.Address, topic [32]byte) (bool, error) {
+// Solidity: function verifySub(address person, bytes32 topic) constant returns(bool, bytes2)
+func (_Flytrap *FlytrapCallerSession) VerifySub(person common.Address, topic [32]byte) (bool, [2]byte, error) {
 	return _Flytrap.Contract.VerifySub(&_Flytrap.CallOpts, person, topic)
 }
 
@@ -343,25 +356,46 @@ func (_Flytrap *FlytrapTransactorSession) AddSub(person common.Address, topic [3
 	return _Flytrap.Contract.AddSub(&_Flytrap.TransactOpts, person, topic)
 }
 
-// AddTopic is a paid mutator transaction binding the contract method 0x0c921708.
+// AddTopic is a paid mutator transaction binding the contract method 0x31a0a410.
 //
-// Solidity: function addTopic(bytes32 topic, uint256 addPubCost, uint256 addSubCost) returns()
-func (_Flytrap *FlytrapTransactor) AddTopic(opts *bind.TransactOpts, topic [32]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
-	return _Flytrap.contract.Transact(opts, "addTopic", topic, addPubCost, addSubCost)
+// Solidity: function addTopic(bytes32 topic, bytes2 country, uint256 addPubCost, uint256 addSubCost) returns()
+func (_Flytrap *FlytrapTransactor) AddTopic(opts *bind.TransactOpts, topic [32]byte, country [2]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
+	return _Flytrap.contract.Transact(opts, "addTopic", topic, country, addPubCost, addSubCost)
 }
 
-// AddTopic is a paid mutator transaction binding the contract method 0x0c921708.
+// AddTopic is a paid mutator transaction binding the contract method 0x31a0a410.
 //
-// Solidity: function addTopic(bytes32 topic, uint256 addPubCost, uint256 addSubCost) returns()
-func (_Flytrap *FlytrapSession) AddTopic(topic [32]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
-	return _Flytrap.Contract.AddTopic(&_Flytrap.TransactOpts, topic, addPubCost, addSubCost)
+// Solidity: function addTopic(bytes32 topic, bytes2 country, uint256 addPubCost, uint256 addSubCost) returns()
+func (_Flytrap *FlytrapSession) AddTopic(topic [32]byte, country [2]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
+	return _Flytrap.Contract.AddTopic(&_Flytrap.TransactOpts, topic, country, addPubCost, addSubCost)
 }
 
-// AddTopic is a paid mutator transaction binding the contract method 0x0c921708.
+// AddTopic is a paid mutator transaction binding the contract method 0x31a0a410.
 //
-// Solidity: function addTopic(bytes32 topic, uint256 addPubCost, uint256 addSubCost) returns()
-func (_Flytrap *FlytrapTransactorSession) AddTopic(topic [32]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
-	return _Flytrap.Contract.AddTopic(&_Flytrap.TransactOpts, topic, addPubCost, addSubCost)
+// Solidity: function addTopic(bytes32 topic, bytes2 country, uint256 addPubCost, uint256 addSubCost) returns()
+func (_Flytrap *FlytrapTransactorSession) AddTopic(topic [32]byte, country [2]byte, addPubCost *big.Int, addSubCost *big.Int) (*types.Transaction, error) {
+	return _Flytrap.Contract.AddTopic(&_Flytrap.TransactOpts, topic, country, addPubCost, addSubCost)
+}
+
+// LogAlert is a paid mutator transaction binding the contract method 0x7bd7b2ac.
+//
+// Solidity: function logAlert(address person, uint8 alert, bytes32 desc) returns()
+func (_Flytrap *FlytrapTransactor) LogAlert(opts *bind.TransactOpts, person common.Address, alert uint8, desc [32]byte) (*types.Transaction, error) {
+	return _Flytrap.contract.Transact(opts, "logAlert", person, alert, desc)
+}
+
+// LogAlert is a paid mutator transaction binding the contract method 0x7bd7b2ac.
+//
+// Solidity: function logAlert(address person, uint8 alert, bytes32 desc) returns()
+func (_Flytrap *FlytrapSession) LogAlert(person common.Address, alert uint8, desc [32]byte) (*types.Transaction, error) {
+	return _Flytrap.Contract.LogAlert(&_Flytrap.TransactOpts, person, alert, desc)
+}
+
+// LogAlert is a paid mutator transaction binding the contract method 0x7bd7b2ac.
+//
+// Solidity: function logAlert(address person, uint8 alert, bytes32 desc) returns()
+func (_Flytrap *FlytrapTransactorSession) LogAlert(person common.Address, alert uint8, desc [32]byte) (*types.Transaction, error) {
+	return _Flytrap.Contract.LogAlert(&_Flytrap.TransactOpts, person, alert, desc)
 }
 
 // RevokePub is a paid mutator transaction binding the contract method 0x8b99d3f8.

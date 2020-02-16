@@ -14,7 +14,7 @@ import (
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
-const CLIENT = "0xACB23Bf900924546F5cac8Bf103039e09568c32c"
+const CLIENT = "0x8854e627347fD04b4a77DB7dcc6aaa43b7e7135c"
 
 var (
 	contract    = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
@@ -54,7 +54,7 @@ func main() {
 		t := [32]byte{}
 		copy(t[:], *topicName)
 		b.Opts.Value = big.NewInt(1000)
-		if _, err := b.Instance.AddTopic(b.Opts, t, big.NewInt(0), big.NewInt(0)); err != nil {
+		if _, err := b.Instance.AddTopic(b.Opts, t, [2]byte{'U', 'K'}, big.NewInt(0), big.NewInt(0)); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -93,7 +93,7 @@ func main() {
 			}
 			event.From = common.BytesToAddress(vLog.Topics[1].Bytes())
 			event.To = common.BytesToAddress(vLog.Topics[2].Bytes())
-			event.Action = vLog.Topics[3].Big()
+			event.Action = blockchain.Action(vLog.Topics[3].Big().Int64())
 			events = append(events, event)
 		}
 		for _, event := range events {
@@ -101,7 +101,7 @@ func main() {
 			log.Printf("Topic affected: %s", event.Name)
 			log.Printf("Person initiating request: %s", event.From.Hex())
 			log.Printf("Person affected: %s", event.To.Hex())
-			log.Printf("Action performed: %s\n\n", blockchain.ActionMap[event.Action.Int64()])
+			log.Printf("Action performed: %s\n\n", event.Action)
 		}
 	}
 }
