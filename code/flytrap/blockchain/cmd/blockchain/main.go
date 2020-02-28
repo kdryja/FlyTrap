@@ -14,7 +14,7 @@ import (
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
-const CLIENT = "0x8854e627347fD04b4a77DB7dcc6aaa43b7e7135c"
+const CLIENT = "0xACB23Bf900924546F5cac8Bf103039e09568c32c"
 
 var (
 	contract    = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
@@ -22,7 +22,7 @@ var (
 	addPub      = flag.Bool("pub", false, "Client to add as publisher")
 	addSub      = flag.Bool("sub", false, "Client to add as subscriber")
 	addContract = flag.Bool("new", false, "Whether to create new contract for flytrap")
-	topicName   = flag.String("topic", "MyTopic", "name of the topic to modify")
+	topicName   = flag.String("topic", "MyTopic4", "name of the topic to modify")
 	logsRead    = flag.Bool("logs", false, "receive event logs")
 )
 
@@ -54,7 +54,7 @@ func main() {
 		t := [32]byte{}
 		copy(t[:], *topicName)
 		b.Opts.Value = big.NewInt(1000)
-		if _, err := b.Instance.AddTopic(b.Opts, t, [2]byte{'U', 'K'}, big.NewInt(0), big.NewInt(0)); err != nil {
+		if _, err := b.Instance.AddTopic(b.Opts, t, [2]byte{'G', 'B'}, big.NewInt(0), big.NewInt(0)); err != nil {
 			log.Fatal(err)
 		}
 	}

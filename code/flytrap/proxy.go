@@ -50,14 +50,10 @@ func connIP(c net.Conn) string {
 	return requester[:strings.LastIndex(requester, ":")]
 }
 
-func (p *Proxy) country() [2]byte {
-	return [2]byte{'U', 'S'}
-}
-
 func (p *Proxy) applyFailedTry(topic string) {
 	ip := connIP(p.lc)
 	currentTries, _ := p.Cache.FailedTries.LoadOrStore(ip, 1)
-	log.Printf("Auth failed for %q", ip)
+	log.Printf("Auth failed for %q for topic %q", ip, topic)
 	if currentTries.(int) >= MAX_TRIES {
 		log.Printf("Applying  ban for %q", ip)
 		p.Cache.BanList.Store(ip, time.Now().Add(BAN_DURATION))
@@ -78,10 +74,6 @@ func (p *Proxy) verifyAccess(topic string, mask byte) (bool, byte, *sync.Map, er
 	resultByte, ok := result.(byte)
 	if !ok {
 		return false, 0, nil, fmt.Errorf("non-byte value found in permission map")
-	}
-	// User is not permitted to access, increase failed tries count
-	if !(resultByte&mask == mask) {
-		p.applyFailedTry(topic)
 	}
 	return ok && resultByte&mask == mask, resultByte, permMap, nil
 }
@@ -142,7 +134,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 					log.Printf("Client %q was already authorised to subscribe to topic %q", p.pubKey.String(), topic)
 					continue
 				}
-				ok, err := blockchain.VerifyAccess(topic, p.pubKey, p.country(), false)
+				ok, err := blockchain.VerifyAccess(topic, p.pubKey, country(connIP(p.lc)), false)
 				if err != nil {
 					return err
 				}
@@ -173,7 +165,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 				log.Printf("Client %q was already authorised to publish to topic %q", p.pubKey.String(), topic)
 				break
 			}
-			ok, err := blockchain.VerifyAccess(topic, p.pubKey, p.country(), true)
+			ok, err := blockchain.VerifyAccess(topic, p.pubKey, country(connIP(p.lc)), true)
 			if err != nil {
 				return err
 			}
@@ -204,6 +196,7 @@ func New(dst string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
 	// First check if user was banned before
 	if val, ok := ca.BanList.Load(connIP(c)); ok {
 		if !time.Now().After(val.(time.Time)) {
+			c.Write(connackDenied)
 			c.Close()
 			return nil, fmt.Errorf("user was banned from connecting")
 		}
