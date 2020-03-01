@@ -11,7 +11,7 @@ const IP_DATABASE = "GeoLite2-Country.mmdb"
 
 func country(address string) [2]byte {
 	// For localhost testing, return GB
-	if address == "127.0.0.1" {
+	if address == "[::1]" || address == "127.0.0.1" {
 		return [2]byte{'G', 'B'}
 	}
 	db, err := geoip2.Open(IP_DATABASE)

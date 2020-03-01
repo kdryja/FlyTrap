@@ -22,9 +22,11 @@ import (
 )
 
 type Cache struct {
-	Perms       *sync.Map
-	BanList     *sync.Map
-	FailedTries *sync.Map
+	Perms                  *sync.Map
+	BanList                *sync.Map
+	FailedTries            *sync.Map
+	PubSummary, SubSummary map[string]map[string]bool
+	SensitiveTopics        map[string]bool
 }
 
 type Proxy struct {
@@ -35,7 +37,7 @@ type Proxy struct {
 }
 
 const (
-	MAX_TRIES    = 3
+	MAX_TRIES    = 2
 	BAN_DURATION = time.Minute * 10
 )
 
@@ -44,6 +46,26 @@ var (
 	subackDenied  = []byte{0x90, 0x04, 0x00, 0x01, 0x00, 0x87}
 	pubackDenied  = []byte{0x40, 0x04, 0x00, 0x01, 0x87, 0x00}
 )
+
+func (p *Proxy) savePub(topic, pubkey string) {
+	if !p.Cache.SensitiveTopics[topic] {
+		return
+	}
+	if _, ok := p.Cache.PubSummary[topic]; !ok {
+		p.Cache.PubSummary[topic] = make(map[string]bool)
+	}
+	p.Cache.PubSummary[topic][pubkey] = true
+}
+
+func (p *Proxy) saveSub(topic, pubkey string) {
+	if !p.Cache.SensitiveTopics[topic] {
+		return
+	}
+	if _, ok := p.Cache.SubSummary[topic]; !ok {
+		p.Cache.SubSummary[topic] = make(map[string]bool)
+	}
+	p.Cache.SubSummary[topic][pubkey] = true
+}
 
 func connIP(c net.Conn) string {
 	requester := c.RemoteAddr().String()
@@ -57,8 +79,8 @@ func (p *Proxy) applyFailedTry(topic string) {
 	if currentTries.(int) >= MAX_TRIES {
 		log.Printf("Applying  ban for %q", ip)
 		p.Cache.BanList.Store(ip, time.Now().Add(BAN_DURATION))
-		p.Cache.FailedTries.Store(ip, 1)
-		blockchain.PersistentLog(blockchain.FiveFailures, p.pubKey, topic)
+		p.Cache.FailedTries.Delete(ip)
+		blockchain.PersistentLog(blockchain.Banned, p.pubKey, topic, connIP(p.lc))
 		return
 	}
 	p.Cache.FailedTries.Store(ip, currentTries.(int)+1)
@@ -132,9 +154,10 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 				}
 				if cached {
 					log.Printf("Client %q was already authorised to subscribe to topic %q", p.pubKey.String(), topic)
+					p.saveSub(topic, p.pubKey.String())
 					continue
 				}
-				ok, err := blockchain.VerifyAccess(topic, p.pubKey, country(connIP(p.lc)), false)
+				ok, sensitive, err := blockchain.VerifyAccess(topic, connIP(p.lc), p.pubKey, country(connIP(p.lc)), false)
 				if err != nil {
 					return err
 				}
@@ -142,6 +165,8 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 				if ok {
 					permMap.Store(p.pubKey, resultByte|2)
 					log.Printf("Client %q was authorised to subscribe to topic %q", p.pubKey.String(), topic)
+					p.Cache.SensitiveTopics[topic] = sensitive
+					p.saveSub(topic, p.pubKey.String())
 					continue
 				}
 
@@ -163,9 +188,10 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			}
 			if cached {
 				log.Printf("Client %q was already authorised to publish to topic %q", p.pubKey.String(), topic)
+				p.savePub(topic, p.pubKey.String())
 				break
 			}
-			ok, err := blockchain.VerifyAccess(topic, p.pubKey, country(connIP(p.lc)), true)
+			ok, sensitive, err := blockchain.VerifyAccess(topic, connIP(p.lc), p.pubKey, country(connIP(p.lc)), true)
 			if err != nil {
 				return err
 			}
@@ -178,9 +204,11 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 				}
 				break
 			}
+			p.Cache.SensitiveTopics[topic] = sensitive
 			permMap.Store(p.pubKey, resultByte|1)
 			// Cache the result for future requests
 			log.Printf("Client %q was authorised to publish to topic %q", p.pubKey.String(), topic)
+			p.savePub(topic, p.pubKey.String())
 		}
 		if _, err := recv.Content.WriteTo(rc); err != nil {
 			return err

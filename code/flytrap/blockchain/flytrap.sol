@@ -6,7 +6,8 @@ contract Flytrap {
 
     struct Topic {
         bool isValue;
-        bytes32 name;
+        bool sensitive;
+        string name;
         uint addPubCost;
         uint addSubCost;
         address payable owner;
@@ -22,37 +23,39 @@ contract Flytrap {
       RevokePub,
       RevokeSub,
       WrongCountry,
-      FiveFailures
+      Banned,
+      Summary
     }
 
     event ACLChange (
       address indexed _src,
       address indexed _target,
       ActionPerformed indexed _action,
-      bytes32 _name,
+      string _name,
+      string reason,
       uint _timestamp
     );
 
-    mapping(bytes32 => Topic) public topics;
+    mapping(string => Topic) public topics;
 
     constructor(uint cost) public {
         owner = msg.sender;
         addTopicCost = cost;
     }
 
-    function addTopic(bytes32 topic, bytes2 country, uint addPubCost, uint addSubCost) public payable {
+    function addTopic(string memory topic, bytes2 country, uint addPubCost, uint addSubCost, string memory reason, bool sensitive) public payable {
         require(topics[topic].isValue == false);
         require(msg.value >= addTopicCost);
-        topics[topic] = Topic(true, topic, addPubCost, addSubCost, msg.sender, country);
+        topics[topic] = Topic(true, sensitive, topic, addPubCost, addSubCost, msg.sender, country);
 
         if (addTopicCost > 0) {
           owner.transfer(msg.value);
         }
 
-        emit ACLChange(msg.sender, msg.sender, ActionPerformed.AddTopic, topic, block.timestamp);
+        emit ACLChange(msg.sender, msg.sender, ActionPerformed.AddTopic, topic, reason, block.timestamp);
     }
     
-    function addPub(address person, bytes32 topic) public payable {
+    function addPub(address person, string memory topic, string memory reason) public payable {
         require(topics[topic].owner == msg.sender || topics[topic].addPubCost > 0);
         require(msg.value >= topics[topic].addPubCost);
         topics[topic].publishers[person] = true;
@@ -61,35 +64,35 @@ contract Flytrap {
           topics[topic].owner.transfer(msg.value);
         }
 
-        emit ACLChange(msg.sender, person, ActionPerformed.AddPub, topic, block.timestamp);
+        emit ACLChange(msg.sender, person, ActionPerformed.AddPub, topic, reason, block.timestamp);
     }
-    function addSub(address person, bytes32 topic) public payable{
+    function addSub(address person, string memory topic, string memory reason) public payable{
         require(topics[topic].owner == msg.sender || topics[topic].addSubCost > 0);
         require(msg.value >= topics[topic].addSubCost);
         topics[topic].subscribers[person] = true;
         if (topics[topic].addSubCost > 0) {
           topics[topic].owner.transfer(msg.value);
         }
-        emit ACLChange(msg.sender, person, ActionPerformed.AddSub, topic, block.timestamp);
+        emit ACLChange(msg.sender, person, ActionPerformed.AddSub, topic, reason, block.timestamp);
     }
-    function revokePub(address person, bytes32 topic) public {
+    function revokePub(address person, string memory topic, string memory reason) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].publishers[person] = false;
-        emit ACLChange(msg.sender, person, ActionPerformed.RevokePub, topic, block.timestamp);
+        emit ACLChange(msg.sender, person, ActionPerformed.RevokePub, topic, reason, block.timestamp);
     }
-    function revokeSub(address person, bytes32 topic) public {
+    function revokeSub(address person, string memory topic, string memory reason) public {
         require(topics[topic].owner == msg.sender);
         topics[topic].subscribers[person] = false;
-        emit ACLChange(msg.sender, person, ActionPerformed.RevokeSub, topic, block.timestamp);
+        emit ACLChange(msg.sender, person, ActionPerformed.RevokeSub, topic, reason, block.timestamp);
     }
 
-    function verifyPub(address person, bytes32 topic) public view returns (bool, bytes2) {
-        return (topics[topic].publishers[person], topics[topic].country);
+    function verifyPub(address person, string memory topic) public view returns (bool, bytes2, bool) {
+        return (topics[topic].publishers[person], topics[topic].country, topics[topic].sensitive);
     }
-    function verifySub(address person, bytes32 topic) public view returns (bool, bytes2) {
-        return (topics[topic].subscribers[person], topics[topic].country);
+    function verifySub(address person, string memory topic) public view returns (bool, bytes2, bool) {
+        return (topics[topic].subscribers[person], topics[topic].country, topics[topic].sensitive);
     }
-    function logAlert(address person, ActionPerformed alert, bytes32 desc) public {
-        emit ACLChange(msg.sender, person, alert, desc, block.timestamp);
+    function logAlert(address person, ActionPerformed alert, string memory desc, string memory reason) public {
+        emit ACLChange(msg.sender, person, alert, desc, reason, block.timestamp);
     }
 }

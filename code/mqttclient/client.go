@@ -31,7 +31,7 @@ var (
 	pub     = flag.Int("pub", 0, "How many messages to publish")
 	sub     = flag.Int("sub", 0, "How many messages to receive via subscription")
 	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
-	topic   = flag.String("topic", "MyTopic", "Topic for use for pub/sub")
+	topic   = flag.String("topic", "MyTopic5", "Topic for use for pub/sub")
 	cID     = flag.String("id", "ClientID", "ID of connecting client")
 )
 

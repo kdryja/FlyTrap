@@ -15,7 +15,7 @@ import (
 const (
 	ADDRESS          = "http://localhost:7545"
 	SERVER_PRIVKEY   = "privkey.asc"
-	FLYTRAP_CONTRACT = "0xD1d784F247a60b119d555fe1eC913886D28A9eaE"
+	FLYTRAP_CONTRACT = "0x7A84fE8FC721Dd0550F3f625d190399f7F325722"
 )
 
 const (
@@ -25,7 +25,8 @@ const (
 	RevokePub
 	RevokeSub
 	WrongCountry
-	FiveFailures
+	Banned
+	Summary
 )
 
 type Action int
@@ -39,10 +40,10 @@ type Blockchain struct {
 
 // Event is a struct containing data about event emitted on blockchain
 type Event struct {
-	Name      [32]byte
-	From      common.Address
-	To        common.Address
-	Timestamp *big.Int
+	Name, Reason string
+	From         common.Address
+	To           common.Address
+	Timestamp    *big.Int
 	Action
 }
 
@@ -54,38 +55,37 @@ func (a Action) String() string {
 		"RevokePub",
 		"RevokeSub",
 		"WrongCountry",
-		"FiveFailures",
+		"Banned",
+		"Summary",
 	}
 	return actions[a]
 }
 
 // VerifyAccess function will inspect smart contract to determine whether the provided public key can publish / subscribe to given topic.
-func VerifyAccess(topic string, key common.Address, country [2]byte, pub bool) (bool, error) {
+func VerifyAccess(topic, ip string, key common.Address, country [2]byte, pub bool) (bool, bool, error) {
 	b, err := New()
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
-		return false, err
+		return false, false, err
 	}
-	t := [32]byte{}
-	copy(t[:], topic)
-	var ok bool
+	var ok, sensitive bool
 	var storedCountry [2]byte
 	if pub {
-		ok, storedCountry, err = b.Instance.VerifyPub(nil, key, t)
+		ok, storedCountry, sensitive, err = b.Instance.VerifyPub(nil, key, topic)
+	} else {
+		ok, storedCountry, sensitive, err = b.Instance.VerifySub(nil, key, topic)
 	}
-	ok, storedCountry, err = b.Instance.VerifyPub(nil, key, t)
 	if country != storedCountry {
-		copy(t[:], fmt.Sprintf("want: %s, got %s", storedCountry, country))
-		if _, err := b.Instance.LogAlert(b.Opts, key, uint8(WrongCountry), t); err != nil {
-			return false, err
+		if _, err := b.Instance.LogAlert(b.Opts, key, uint8(WrongCountry), topic, fmt.Sprintf("want: %s, got %s. ip: %q", storedCountry, country, ip)); err != nil {
+			return false, false, err
 		}
 	}
-	return ok && country == storedCountry, err
+	return ok && country == storedCountry, sensitive, err
 }
 
-func PersistentLog(reason Action, key common.Address, topic string) error {
+func SummaryLog(summary string) error {
 	b, err := New()
 	if err != nil {
 		return err
@@ -93,9 +93,21 @@ func PersistentLog(reason Action, key common.Address, topic string) error {
 	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
 		return err
 	}
-	t := [32]byte{}
-	copy(t[:], topic)
-	if _, err := b.Instance.LogAlert(b.Opts, key, uint8(reason), t); err != nil {
+	if _, err := b.Instance.LogAlert(b.Opts, common.HexToAddress(FLYTRAP_CONTRACT), uint8(Summary), "na", summary); err != nil {
+		return err
+	}
+	return nil
+}
+
+func PersistentLog(reason Action, key common.Address, topic, ip string) error {
+	b, err := New()
+	if err != nil {
+		return err
+	}
+	if err := b.SetInstance(common.HexToAddress(FLYTRAP_CONTRACT)); err != nil {
+		return err
+	}
+	if _, err := b.Instance.LogAlert(b.Opts, key, uint8(reason), topic, fmt.Sprintf("too many failed attempts from IP %q", ip)); err != nil {
 		return err
 	}
 	return nil
@@ -126,8 +138,8 @@ func New() (*Blockchain, error) {
 
 	auth := bind.NewKeyedTransactor(priv)
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(800000) // in units
+	auth.Value = big.NewInt(0)      // in wei
+	auth.GasLimit = uint64(2500000) // in units
 	auth.GasPrice = gasPrice
 	return &Blockchain{Opts: auth, Client: client}, err
 }
@@ -138,17 +150,13 @@ func (b *Blockchain) SetInstance(contract common.Address) error {
 	return err
 }
 
-func (b *Blockchain) AddPub(key, topic string) error {
-	t := [32]byte{}
-	copy(t[:], topic)
-	_, err := b.Instance.AddPub(b.Opts, common.HexToAddress(key), t)
+func (b *Blockchain) AddPub(key, topic, reason string) error {
+	_, err := b.Instance.AddPub(b.Opts, common.HexToAddress(key), topic, reason)
 	return err
 }
 
-func (b *Blockchain) AddSub(key, topic string) error {
-	t := [32]byte{}
-	copy(t[:], topic)
-	_, err := b.Instance.AddSub(b.Opts, common.HexToAddress(key), t)
+func (b *Blockchain) AddSub(key, topic, reason string) error {
+	_, err := b.Instance.AddSub(b.Opts, common.HexToAddress(key), topic, reason)
 	return err
 }
 
