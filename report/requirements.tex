@@ -1,0 +1,48 @@
+\chapter{Requirements \& Architecture}
+In this chapter I will outline base requirements for the project along with sample stories that would later dictate the workflow. In the second part, I will also include overview of the architecture proposed for the system, correlating each element with relevant requirement and explaining how they would address the use-cases.
+
+\section{Requirements}
+
+\subsection{User stories}
+
+\begin{enumerate}
+\item As a government regulator, I'd like to overview access history to specific MQTT topics, to make sure the data is handled in GDPR-compliant manner.
+\item As a government regulator, I'd like to verify why / when / who accessed given resource at a specific time, such that I can issue fines for potential non-compliance and inspect data breaches.
+\item As a topic owner, I'd like to restrict people that can publish / subscribe to them, to maintain their confidentiality.
+\item As a topic owner, I'd like to collect payments from people willing to access my data.
+\item As a topic owner, I'd like to block access to my information from requests coming outside requested country, to comply with GDPR requirements.
+\item As a broker owner, I'd like to collect payments from people willing to publish their data on my system, to keep the system profitable.
+\item As a broker owner, I'd like to secure a distributed network of brokers (with varied implementations), to increase system's availability. 
+\item As a broker owner, I'd like to block access to the system to malicious clients performing denial-of-service attacks, to avoid system downtime.
+\item As a data consumer, I'd like to perform all operations on low-power devices, such that I can utilise my IoT sensors.
+\item As a data consumer, I'd like to access the broker from over a hundred parallel sensors, each publishing data independently.
+\end{enumerate}
+
+\subsection{Functional Requirements}
+
+The user stories can then be further formulated into the following functional requirements:
+
+\begin{itemize}[leftmargin=4.5em]
+\item[\textbf{(FR1)}] The system will provide an interface to manage access to the topics along with inspecting the audit trails.
+\item[\textbf{(FR2)}] The system can connect to any Ethereum node, be it a public endpoint or a locally running, closed network. This will provide flexibility of either using transparent and with 100\% uptime resource or a closed node with reduced costs.
+\item[\textbf{(FR3)}] The system should provide a way to collect payments in ETH from clients attempting to gain access to relevant resources. This payment would then in process be transferred to the resource owner's Ethereum wallet.
+\item[\textbf{(FR4)}] The system should offer an option to specify an exact amount of ETH required to publish or subscribe - with possibility of separating the costs and also setting the cost to 0 (=free).
+\item[\textbf{(FR5)}] The system should be capable of fending of primitive denial-of-service attacks by blocking continuous, failed attempts to connect.
+\item[\textbf{(FR6)}] The operations performed by clients will be of limited complexity, such that they can be executed on devices with limited computational power.
+\item[\textbf{(FR7)}] The system can answer crucial GDPR questions, such as who accessed given resource, why did they have access, when they accessed it and what exactly was accessed.
+\item[\textbf{(FR8)}] The system should offer an option to restrict the client's country that can access the resource, which the would be verified using GeoIP lookup, as various countries have various data protection laws.
+\end{itemize}
+
+\subsection{Non-functional Requirements}
+
+In addition to the functional, it is also important to mention following non-functional requirements, as system is intended for end-users (potentially non-technical) and due to incorporation with blockchain can introduce performance overhead.
+
+\begin{itemize}[leftmargin=4.5em]
+\item[\textbf{(NFR1)}] The system should provide \textbf{an overhead of no more than 2 seconds cumulative} per MQTT session. This is important, as the intention is to provide an add-on on top of the existing MQTT brokers. This might further compromise the current efficiency, so the system should aim to minimise the added latency 
+\item[\textbf{(NFR2)}] The system should be agnostic of the used MQTT broker, as long as the broker \textbf{fully implements MQTT v5.0 standard}. As pointed out earlier, there is a variety of brokers available to use, such as Mosquitto or Moquette. FlyTrap shouldn't rely on the implementation of a broker, but rather only on the standard utilised.
+\item[\textbf{(NFR3)}] The system should be capable of extending any MQTT broker with \textbf{Authentication, Authorization, Accountability} framework. This is to ensure that data can only be accessed by authenticated entities, which are authorized to access requested resources - and in case of a breach or other disaster, keep them accountable to their actions.
+\item[\textbf{(NFR4)}] The system should only be based on \textbf{Free and Open-Source Software}. Since the ultimate aim is to provide increase security, keeping the source open would allow any potential users to inspect its operation. Furthermore, third party security audits can happen without the system owner's intervention.
+\item[\textbf{(NFR5)}] The system should be capable to run inside \textbf{virtualised container}, to ensure that it's platform agnostic.
+\end{itemize}
+
+\section{Architecture}

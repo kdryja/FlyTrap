@@ -22,11 +22,43 @@ MQTT v5.0 (as per the specification\footnote{https://docs.oasis-open.org/mqtt/mq
 \subsection{Blockchain}
 By decentralising the data layer of the AAA framework and in process placing it on distributed ledger, I can ensure maximised uptime and complete transparency of performed transactions. Events such as permission changes, failed authentication attempts will be recorded as separate transaction which then could be audited by anyone knowing the public address of the system. This then could be handed over to authorities or auditing corporations to ensure that data is passed in a lawful manner. Utilising Blockchain technologies also opens an opportunity to require payment (in the form of crypto currency) from potential consumers of data effectively expanding the business model. 
 \subsection{Legislature}
-The rise of awareness of necessity of data protection also encouraged governments to introduce legal requirements (such as GDPR or CCPA) of data governance and face heave fines in case of non-compliance. MQTT standard and their implementation at the moment would be considered non-compliant, due to effectively no way to trace past operations. 
+The rise of awareness of necessity of data protection also encouraged governments to introduce legal requirements (such as GDPR or CCPA) of data governance and face heave fines in case of non-compliance. MQTT standard and their implementation at the moment would be considered non-compliant, due to effectively no way to trace past operations. General Data Protection Regulation requires entities handling user data to maintain proper retention of data and purge if requested by the data owner. MQTT at its current state is not capable of either, as messages are removed from the broker as soon as they are consumed (with small exceptions), leaving no trace of ``who'' accessed ``what'' (not to mention questions such as ``why'' they accessed it).
 
 
 \section{Goals}
 
+The project can be divided onto four main goals and two extras, leaving some field for maneuvering in case of road blocks or difficulties resulting from the challenges faced in the dissertation. By having flexible targets, I will be able to stop sooner in case of overestimating the schedule, or carrying on with extra work, should I find myself meeting the targets quicker than expected. 
+
+\paragraph{Main Goals:}
+\begin{enumerate}
+  \item Design structure of blockchain network, relevant data models that would be placed on the blockchain and deploy on the Ethereum platform, capable of recording transactions and allowing for modification of ACLs, i.e. which wallets are permitted to access specific resources on the MQTT brokers.
+  \item Design rules that would be used for capturing the transactions. For example, rule stating that if client makes more than 5 consecutive, failed authentication attempts would be placed on a blacklist and that action would be added onto the blockchain as a transaction. 
+  \item Design containerised software acting as a secure proxy between brokers and connecting clients. This will handle both authentication and log performed action as an immutable transaction on a blockchain network. Logging would only be performed if the requested operation triggers some pre-defined rules.
+  \item Perform evaluation of the designed solution using an off the shelf MQTT broker and a range of experimental scenarios with simulated network of MQTT clients.
+\end{enumerate}
+
+\paragraph{Extra Goals:}
+\begin{enumerate}
+  \item Create public API for the auditors to freely access the contents of blockchain and thus transactions containing information about suspicious operations.
+  \item Generalise the implementation of the framework so it can be deployed with any broker following the MQTT standard.
+\end{enumerate}
+
+\paragraph{What project is NOT trying to be:}
+\begin{itemize}
+  \item Design a new blockchain platform from scratch. Rather existing solution - Ethereum - is going to be used.
+  \item Write / modify operating system of IoT devices.
+  \item Design a new MQTT Broker. The system is going to be built on-top of MQTT layer.
+\end{itemize}
+
 \section{Report Structure}
 
-
+The dissertation is going to be divided onto 7 chapters, each describing following aspects of the project:
+\begin{itemize}[leftmargin=4.5em]
+  \item[Chapter 1] \textbf{Introduction} chapter will outline the main motivation behind the project and introduce the notions used a building block in the design. It will also list goals and no-goals defining success.
+  \item[Chapter 2] In \textbf{Background \& Related Work}, similar research and state of the art will be described along with outlining the differences between them and this project. And thorough explanation of used software will also be attached, such as what is blockchain, Ethereum, MQTT. 
+  \item[Chapter 3] \textbf{Requirements \& Architecture} will include analysis of both functional and non-functional requirements, main use-cases that are driving the project and high-level overview of the architecture explaining how each element addresses each of the requirements.
+  \item[Chapter 4] \textbf{Design} will be an expansion to architecture, providing an explanation on how each of the elements connects to another.
+  \item[Chapter 5] \textbf{Implementation} will talk about the process of implementation the design into software. It will include notions such as followed processes, used frameworks and sample code snippets.
+  \item[Chapter 6] Inside \textbf{Testing \& Evaluation} a comparison between state-of-the-art software, vanilla and FlyTrap will be performed. Tests checking for performance impact and whether common attack can be detected / stopped will also be run.
+  \item[Chapter 7] \textbf{Discussion \& Future Work} will include conclusions of the project, elements that were left-over, but beneficial for future iteration and all blockages encountered throughout. 
+\end{itemize}
