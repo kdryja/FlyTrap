@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (b *Blockchain) AllLogs() []Event {
+func (b *Blockchain) AllLogs(start, end *time.Time, contract string) []Event {
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(0),
 		ToBlock:   big.NewInt(1000000),
 		Addresses: []common.Address{
-			common.HexToAddress(FLYTRAP_CONTRACT),
+			common.HexToAddress(contract),
 		},
 	}
 	logs, err := b.Client.FilterLogs(context.Background(), query)
@@ -34,6 +34,12 @@ func (b *Blockchain) AllLogs() []Event {
 		err = contractAbi.Unpack(&event, "ACLChange", vLog.Data)
 		if err != nil {
 			log.Fatal(err)
+		}
+		if start != nil && start.After(time.Unix(event.Timestamp.Int64(), 0)) {
+			continue
+		}
+		if end != nil && end.Before(time.Unix(event.Timestamp.Int64(), 0)) {
+			break
 		}
 		event.From = common.BytesToAddress(vLog.Topics[1].Bytes())
 		event.To = common.BytesToAddress(vLog.Topics[2].Bytes())

@@ -40,11 +40,12 @@ type Blockchain struct {
 
 // Event is a struct containing data about event emitted on blockchain
 type Event struct {
-	Name, Reason string
-	From         common.Address
-	To           common.Address
-	Timestamp    *big.Int
-	Action
+	Name      string         `json:"topic"`
+	Reason    string         `json:"reason"`
+	From      common.Address `json:"initiator"`
+	To        common.Address `json:"target"`
+	Timestamp *big.Int       `json:"timestamp"`
+	Action    `json:"action"`
 }
 
 func (a Action) String() string {

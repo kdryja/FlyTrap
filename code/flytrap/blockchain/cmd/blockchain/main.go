@@ -66,7 +66,7 @@ func main() {
 		}
 	}
 	if *logsRead {
-		events := b.AllLogs()
+		events := b.AllLogs(nil, nil, *contract)
 		var parsedTime *time.Time
 		if *timestamp != "" {
 			tmpTime, err := time.Parse("2006-01-02", *timestamp)
