@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,7 +16,7 @@ import (
 const (
 	ADDRESS          = "http://localhost:7545"
 	SERVER_PRIVKEY   = "privkey.asc"
-	FLYTRAP_CONTRACT = "0x7A84fE8FC721Dd0550F3f625d190399f7F325722"
+	FLYTRAP_CONTRACT = "0x1D199e5D181FC41a7B93e1c2610cFce1409186BF"
 )
 
 const (
@@ -111,6 +112,7 @@ func PersistentLog(reason Action, key common.Address, topic, ip string) error {
 	if _, err := b.Instance.LogAlert(b.Opts, key, uint8(reason), topic, fmt.Sprintf("too many failed attempts from IP %q", ip)); err != nil {
 		return err
 	}
+	log.Print("logging")
 	return nil
 }
 

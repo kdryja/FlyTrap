@@ -76,6 +76,7 @@ func (p *Proxy) applyFailedTry(topic string) {
 	ip := connIP(p.lc)
 	currentTries, _ := p.Cache.FailedTries.LoadOrStore(ip, 1)
 	log.Printf("Auth failed for %q for topic %q", ip, topic)
+	log.Printf("current tries %d", currentTries)
 	if currentTries.(int) >= MAX_TRIES {
 		log.Printf("Applying  ban for %q", ip)
 		p.Cache.BanList.Store(ip, time.Now().Add(BAN_DURATION))
@@ -198,6 +199,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 			// Check if pubkey is authorized to publish to given topic
 			if !ok {
 				log.Printf("Client %q attempted publish to topic %q and was denied due to insufficient permission", p.pubKey.String(), topic)
+				p.applyFailedTry(topic)
 				// Write PUBACK packet to client, denying access
 				if _, err := lc.Write(pubackDenied); err != nil {
 					return err

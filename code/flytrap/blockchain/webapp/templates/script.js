@@ -1,92 +1,23 @@
-//custom max min header filter
-var minMaxFilterEditor = function (cell, onRendered, success, cancel, editorParams) {
-
-  var end;
-
-  var container = document.createElement("span");
-
-  //create and style inputs
-  var start = document.createElement("input");
-  start.setAttribute("type", "number");
-  start.setAttribute("placeholder", "Min");
-  start.setAttribute("min", 0);
-  start.setAttribute("max", 100);
-  start.style.padding = "4px";
-  start.style.width = "50%";
-  start.style.boxSizing = "border-box";
-
-  start.value = cell.getValue();
-
-  function buildValues() {
-    success({
-      start: start.value,
-      end: end.value,
-    });
-  }
-
-  function keypress(e) {
-    if (e.keyCode == 13) {
-      buildValues();
-    }
-
-    if (e.keyCode == 27) {
-      cancel();
-    }
-  }
-
-  end = start.cloneNode();
-  end.setAttribute("placeholder", "Max");
-
-  start.addEventListener("change", buildValues);
-  start.addEventListener("blur", buildValues);
-  start.addEventListener("keydown", keypress);
-
-  end.addEventListener("change", buildValues);
-  end.addEventListener("blur", buildValues);
-  end.addEventListener("keydown", keypress);
-
-
-  container.appendChild(start);
-  container.appendChild(end);
-
-  return container;
-}
-
-//custom max min filter function
-function minMaxFilterFunction(headerValue, rowValue, rowData, filterParams) {
-  //headerValue - the value of the header filter element
-  //rowValue - the value of the column in this row
-  //rowData - the data for the row being filtered
-  //filterParams - params object passed to the headerFilterFuncParams property
-
-  if (rowValue) {
-    if (headerValue.start != "") {
-      if (headerValue.end != "") {
-        return rowValue >= headerValue.start && rowValue <= headerValue.end;
-      } else {
-        return rowValue >= headerValue.start;
-      }
-    } else {
-      if (headerValue.end != "") {
-        return rowValue <= headerValue.end;
-      }
-    }
-  }
-
-  return false; //must return a boolean, true if it passes the filter.
-}
-
-
-var table = new Tabulator("#audit-table", {
+var auditTable = new Tabulator("#audit-table", {
   height: "500px",
   layout: "fitColumns",
   columns: [
-    {title: "Timestamp", field: "timestamp", width: 120, headerFilter: "input"},
+    {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
     {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
     {title: "Initiator", field: "initiator", variableHeight: "true", headerFilter: "input"},
     {title: "Target", field: "target", headerFilter: "input"},
     {title: "Action", field: "action", width: 120, headerFilter: "input"},
     {title: "Reason", field: "reason", headerFilter: "input"},
+  ],
+});
+var summaryTable = new Tabulator("#summary-table", {
+  height: "500px",
+  layout: "fitColumns",
+  columns: [
+    {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
+    {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
+    {title: "Publishers", field: "publishers", headerFilter: "input"},
+    {title: "Subscribers", field: "subscribers", headerFilter: "input"},
   ],
 });
 $("#fetch-form").submit(function (event) {
@@ -96,7 +27,7 @@ $("#fetch-form").submit(function (event) {
     data: $(this).serialize(),
     success: function (body) {
       audits = body.filter(e => e.action != 7).map(function (e) {
-        e.timestamp = moment.unix(e.timestamp).format("YYYY-MM-DD");
+        e.timestamp = moment.unix(e.timestamp).format("YYYY-MM-DD HH:mm");
         switch (e.action) {
           case 0:
             e.action = "AddTopic"
@@ -122,7 +53,32 @@ $("#fetch-form").submit(function (event) {
         }
         return e
       });
-      table.setData(audits)
+      auditTable.setData(audits)
+
+      let summaries = [];
+      body.filter(e => e.action == 7).forEach(function (t) {
+        let topics = {};
+        let time = moment.unix(t.timestamp).format("YYYY-MM-DD HH:mm");
+        let pubs = JSON.parse(JSON.parse(t.reason).pubs);
+        let subs = JSON.parse(JSON.parse(t.reason).subs);
+        Object.keys(pubs).forEach(e => {
+          topics[e] = {...topics[e], pubs: pubs[e]};
+        });
+        Object.keys(subs).forEach(e => {
+          topics[e] = {...topics[e], subs: subs[e]};
+        });
+        Object.keys(topics).forEach(e => {
+          console.log(e.pubs);
+          console.log(e.subs);
+          summaries.push({
+            timestamp: time,
+            topic: e,
+            publishers: topics[e].pubs ? topics[e].pubs.join('\n') : "",
+            subscribers: topics[e].subs ? topics[e].subs.join('\n') : ""
+          });
+        });
+      });
+      summaryTable.setData(summaries);
     }
   })
   event.preventDefault();
