@@ -1,4 +1,4 @@
-var auditTable = new Tabulator("#audit-table", {
+let auditTable = new Tabulator("#audit-table", {
   layout: "fitColumns",
   pagination: "local",
   paginationSize: 7,
@@ -11,7 +11,7 @@ var auditTable = new Tabulator("#audit-table", {
     {title: "Reason", field: "reason", headerFilter: "input"},
   ],
 });
-var summaryTable = new Tabulator("#summary-table", {
+let summaryTable = new Tabulator("#summary-table", {
   layout: "fitColumns",
   pagination: "local",
   paginationSize: 10,
