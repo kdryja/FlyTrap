@@ -1,6 +1,7 @@
 var auditTable = new Tabulator("#audit-table", {
-  height: "500px",
   layout: "fitColumns",
+  pagination: "local",
+  paginationSize: 7,
   columns: [
     {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
     {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
@@ -11,8 +12,9 @@ var auditTable = new Tabulator("#audit-table", {
   ],
 });
 var summaryTable = new Tabulator("#summary-table", {
-  height: "500px",
   layout: "fitColumns",
+  pagination: "local",
+  paginationSize: 10,
   columns: [
     {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
     {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
@@ -20,14 +22,70 @@ var summaryTable = new Tabulator("#summary-table", {
     {title: "Subscribers", field: "subscribers", headerFilter: "input"},
   ],
 });
-$("#fetch-form").submit(function (event) {
+
+$('#person-input').on('input', function () {
+  $('#topic-input').not(this).prop('disabled', this.value.length)
+});
+$('#topic-input').on('input', function () {
+  $('#person-input').not(this).prop('disabled', this.value.length)
+});
+
+$(".query-form").submit(function (event) {
+  $.ajax({
+    method: "POST",
+    url: "/detailed",
+    data: $(this).serialize(),
+    success: function (body) {
+      $("#result-entity").text(body.req);
+      $("#result-date").text($("#result-date-input").val());
+      $(".results").show();
+      
+      let pubs = $("#publishing-list");
+      let subs = $("#subscribing-list");
+      pubs.empty();
+      subs.empty();
+      body.pubs.forEach(e => {
+        $("<li/>").text(e).appendTo(pubs)
+      });
+      body.subs.forEach(e => {
+        $("<li/>").text(e).appendTo(subs)
+      });
+
+      var notification = document.querySelector('.mdl-js-snackbar');
+      notification.MaterialSnackbar.showSnackbar(
+        {
+          message: 'Fetch successful'
+        }
+      );
+    },
+    error: function (xhr, status, error) {
+      var notification = document.querySelector('.mdl-js-snackbar');
+      notification.MaterialSnackbar.showSnackbar(
+        {
+          message: 'Eror - ' + xhr.status + ': ' + xhr.statusText
+        }
+      );
+    },
+  });
+  event.preventDefault();
+});
+
+$(".fetch-form").submit(function (event) {
   $.ajax({
     method: "POST",
     url: "/logs",
     data: $(this).serialize(),
+    error: function (xhr, status, error) {
+      var notification = document.querySelector('.mdl-js-snackbar');
+      notification.MaterialSnackbar.showSnackbar(
+        {
+          message: 'Eror - ' + xhr.status + ': ' + xhr.statusText
+        }
+      );
+    },
     success: function (body) {
       audits = body.filter(e => e.action != 7).map(function (e) {
-        e.timestamp = moment.unix(e.timestamp).format("YYYY-MM-DD HH:mm");
+        e.timestamp = moment.unix(e.timestamp).format("YYYY-MM-DD HH:mm:ss");
         switch (e.action) {
           case 0:
             e.action = "AddTopic"
@@ -58,7 +116,7 @@ $("#fetch-form").submit(function (event) {
       let summaries = [];
       body.filter(e => e.action == 7).forEach(function (t) {
         let topics = {};
-        let time = moment.unix(t.timestamp).format("YYYY-MM-DD HH:mm");
+        let time = moment.unix(t.timestamp).format("YYYY-MM-DD HH:mm:ss");
         let pubs = JSON.parse(JSON.parse(t.reason).pubs);
         let subs = JSON.parse(JSON.parse(t.reason).subs);
         Object.keys(pubs).forEach(e => {
@@ -68,8 +126,6 @@ $("#fetch-form").submit(function (event) {
           topics[e] = {...topics[e], subs: subs[e]};
         });
         Object.keys(topics).forEach(e => {
-          console.log(e.pubs);
-          console.log(e.subs);
           summaries.push({
             timestamp: time,
             topic: e,
@@ -79,12 +135,19 @@ $("#fetch-form").submit(function (event) {
         });
       });
       summaryTable.setData(summaries);
+
+      var notification = document.querySelector('.mdl-js-snackbar');
+      notification.MaterialSnackbar.showSnackbar(
+        {
+          message: 'Fetch successful!'
+        }
+      );
     }
   })
   event.preventDefault();
 });
 
 $(document).ready(function () {
-  $("#date-start").val(moment().subtract(1, 'days').format("YYYY-MM-DD"));
-  $("#date-end").val(moment().add(1, 'days').format("YYYY-MM-DD"));
+  $(".date-start").val(moment().subtract(1, 'days').format("YYYY-MM-DD"));
+  $(".date-end").val(moment().add(1, 'days').format("YYYY-MM-DD"));
 })

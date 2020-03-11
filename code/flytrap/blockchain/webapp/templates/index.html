@@ -26,16 +26,17 @@
     }
 
     .page-content {
-      margin: 3em;
+      margin: 5em;
     }
 
     .date-pickers {
       margin: 10px 0;
     }
 
-    #fetch-form {
-      margin: 0 40px;
+    .results {
+      display: none;
     }
+
   </style>
 
 </head>
@@ -49,44 +50,124 @@
       <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
         <a href="#fixed-tab-1" class="mdl-layout__tab is-active">Audits</a>
         <a href="#fixed-tab-2" class="mdl-layout__tab">Summaries</a>
+        <a href="#fixed-tab-3" class="mdl-layout__tab">Topic/Person</a>
       </div>
     </header>
     <main class="mdl-layout__content">
       <div class="page-content">
-        <form action="#" id="fetch-form">
-          <div>
-            <div class="mdl-textfield mdl-js-textfield">
-              <input class="mdl-textfield__input" cols=50 style="width:50em" type="textarea" id="contract-addr"
-                name="address" value="{{.Contract}}">
-              Contract's Public Address
+
+        <section class="mdl-layout__tab-panel is-active" id="fixed-tab-1">
+          <form action="#" class="fetch-form">
+            <div>
+              <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input" cols=50 style="width:30em" type="textarea" class="contract-addr"
+                  name="address" value="{{.Contract}}">
+                Contract's Public Address
+              </div>
+            </div>
+            <div class="date-pickers">
+              <input type="date" class="date-start" name="start">
+              <label for="date-start">Start</label>
+            </div>
+            <div class="date-pickers">
+              <input type="date" class="date-end" name="end">
+              <label for="date-end">End</label>
+            </div>
+            <div>
+              <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored fetch-button"
+                type="submit">
+                Fetch
+              </button>
+            </div>
+          </form>
+          <h2> Audit trail for operations on blockchain
+            <div id="audit-table"></div>
+        </section>
+
+        <section class="mdl-layout__tab-panel" id="fixed-tab-2">
+          <form action="#" class="fetch-form">
+            <div>
+              <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input" cols=50 style="width:30em" type="textarea" class="contract-addr"
+                  name="address" value="{{.Contract}}">
+                Contract's Public Address
+              </div>
+            </div>
+            <div class="date-pickers">
+              <input type="date" class="date-start" name="start">
+              <label for="date-start">Start</label>
+            </div>
+            <div class="date-pickers">
+              <input type="date" class="date-end" name="end">
+              <label for="date-end">End</label>
+            </div>
+            <div>
+              <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored fetch-button"
+                type="submit">
+                Fetch
+              </button>
+            </div>
+          </form>
+          <h2> Access summaries for sensitive topics </h2>
+          <div id="summary-table"></div>
+        </section>
+
+        <section class="mdl-layout__tab-panel" id="fixed-tab-3">
+          <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--6-col form-div">
+              <form action="#" class="query-form">
+                <div class="mdl-textfield mdl-js-textfield">
+                  <input class="mdl-textfield__input" cols=50 style="width:30em" type="textarea" class="contract-addr"
+                    name="address" value="{{.Contract}}">
+                  Contract's Public Address
+                </div>
+
+                <div class="date-pickers">
+                  <input type="date" class="date-start" id="result-date-input" name="start">
+                  <label for="date-start">Date</label>
+                </div>
+
+                <div class="person">
+                  <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input detailed-input" id="person-input" style="width:30em" type="text"
+                      name="person" placeholder="Person to query">
+                  </div>
+                </div>
+
+                <div class="topic">
+                  <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input detailed-input" id="topic-input" style="width:20em" type="text"
+                      name="topic" placeholder="Topic to query">
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored fetch-button"
+                    type="submit">
+                    Fetch
+                  </button>
+                </div>
+
+              </form>
+            </div>
+            <div class="mdl-cell mdl-cell--6-col">
+              <div class="results">
+                <p style="font-size: 20px" ;>Following resource "<span id="result-entity"></span>" was accessible by /
+                  had access to the following entities at the end of <span id="result-date"></span>:</p>
+                <p>Publishing:</p>
+                <ul id="publishing-list">
+                </ul>
+                <p>Subscribing:</p>
+                <ul id="subscribing-list">
+                </ul>
+              </div>
             </div>
           </div>
-          <div class="date-pickers">
-            <input type="date" id="date-start" name="start">
-            <label for="date-start">Start</label>
-          </div>
-          <div class="date-pickers">
-            <input type="date" id="date-end" name="end">
-            <label for="date-end">End</label>
-          </div>
-          <div>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored fetch-button" type="submit">
-              Fetch
-            </button>
-          </div>
-        </form>
-        <section class="mdl-layout__tab-panel is-active" id="fixed-tab-1">
-          <div class="page-content">
-            <h2> Audit trail for operations on blockchain </h2>
-            <div id="audit-table"></div>
-          </div>
         </section>
-        <section class="mdl-layout__tab-panel" id="fixed-tab-2">
-          <div class="page-content">
-            <h2> Access summaries for sensitive topics </h2>
-            <div id="summary-table"></div>
-          </div>
-        </section>
+
+        <div id="toast" class="mdl-js-snackbar mdl-snackbar">
+          <div class="mdl-snackbar__text"></div>
+          <button class="mdl-snackbar__action" type="button"></button>
+        </div>
       </div>
     </main>
   </div>

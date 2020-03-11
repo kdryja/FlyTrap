@@ -36,6 +36,11 @@ func (c *Cache) SaveSummary(t *time.Ticker) {
 			}
 			out["subs"] = string(jsonSlice)
 
+			if len(tmpSubs) == 0 && len(tmpPubs) == 0 {
+				log.Print("Nothing to write")
+				continue
+			}
+
 			marshalLog, err := json.Marshal(out)
 			if err != nil {
 				log.Fatal(err)
