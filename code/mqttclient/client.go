@@ -25,14 +25,15 @@ const (
 )
 
 var (
-	connIP  = flag.String("ip", "localhost:8888", "location of MQTT broker")
-	authIP  = flag.String("auth", "localhost:8889", "location of auth server")
-	connTls = flag.Bool("tls", true, "whether to use TLS")
-	pub     = flag.Int("pub", 0, "How many messages to publish")
-	sub     = flag.Int("sub", 0, "How many messages to receive via subscription")
-	pubMsg  = flag.String("msg", "Here Be Dragons", "message to be published")
-	topic   = flag.String("topic", "MyTopic5", "Topic for use for pub/sub")
-	cID     = flag.String("id", "ClientID", "ID of connecting client")
+	connIP       = flag.String("ip", "localhost:8888", "location of MQTT broker")
+	authIP       = flag.String("auth", "localhost:8889", "location of auth server")
+	connTls      = flag.Bool("tls", true, "whether to use TLS")
+	pub          = flag.Int("pub", 0, "How many messages to publish")
+	sub          = flag.Int("sub", 0, "How many messages to receive via subscription")
+	pubMsg       = flag.String("msg", "Here Be Dragons", "message to be published")
+	topic        = flag.String("topic", "MyTopic1", "Topic for use for pub/sub")
+	cID          = flag.String("id", "ClientID", "ID of connecting client")
+	privLocation = flag.String("priv", "privkey1.asc", "Location of your private key file")
 )
 
 func con(ip string) net.Conn {
@@ -57,7 +58,7 @@ func con(ip string) net.Conn {
 }
 
 func signKey() (string, string, error) {
-	priv, err := crypto.LoadECDSA("privkey.asc")
+	priv, err := crypto.LoadECDSA(*privLocation)
 	if err != nil {
 		return "", "", err
 	}

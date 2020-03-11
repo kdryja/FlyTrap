@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
 
-const (
-	DEFAULT_CONTRACT = "0x1D199e5D181FC41a7B93e1c2610cFce1409186BF"
+var (
+	DEFAULT_CONTRACT = os.Getenv("FLYTRAP_CONTRACT")
 )
 
 type Template struct {

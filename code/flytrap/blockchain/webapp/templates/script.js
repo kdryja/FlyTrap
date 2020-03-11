@@ -18,8 +18,8 @@ var summaryTable = new Tabulator("#summary-table", {
   columns: [
     {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
     {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
-    {title: "Publishers", field: "publishers", headerFilter: "input"},
-    {title: "Subscribers", field: "subscribers", headerFilter: "input"},
+    {title: "Publishers", field: "publishers", formatter: "textarea", headerFilter: "input"},
+    {title: "Subscribers", field: "subscribers", formatter: "textarea", headerFilter: "input"},
   ],
 });
 
@@ -149,5 +149,6 @@ $(".fetch-form").submit(function (event) {
 
 $(document).ready(function () {
   $(".date-start").val(moment().subtract(1, 'days').format("YYYY-MM-DD"));
+  $(".date-today").val(moment().format("YYYY-MM-DD"));
   $(".date-end").val(moment().add(1, 'days').format("YYYY-MM-DD"));
 })

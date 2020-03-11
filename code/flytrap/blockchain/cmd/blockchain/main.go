@@ -4,13 +4,12 @@ import (
 	"flag"
 	"log"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kdryja/thesis/code/flytrap/blockchain"
 )
-
-const CLIENT = "0x641c46D43A3c552a76318c12D8Fc2839b913F32F"
 
 var (
 	contract    = flag.String("contract", blockchain.FLYTRAP_CONTRACT, "Specify address of your contract")
@@ -20,8 +19,8 @@ var (
 	revokePub   = flag.String("rpub", "", "Reason to revoke as publisher")
 	revokeSub   = flag.String("rsub", "", "Reason to revoke as subscriber")
 	addContract = flag.Bool("new", false, "Whether to create new contract for flytrap")
-	topicName   = flag.String("topic", "MyTopic5", "name of the topic to modify")
-	client      = flag.String("client", CLIENT, "Public key of client to manipulate")
+	topicName   = flag.String("topic", "MyTopic1", "name of the topic to modify")
+	client      = flag.String("client", os.Getenv("BLOCKCHAIN_*client"), "Public key of client to manipulate")
 	logsRead    = flag.Bool("logs", false, "Receive relevant event logs. Providing -client and -topic flags will restrict the search only to relevant fields.")
 	timestamp   = flag.String("date", "", "Provide date that should be searched for. E.g. 2020-02-29")
 	verbose     = flag.Bool("v", false, "Enable verbose mode")
@@ -58,22 +57,22 @@ func main() {
 		}
 	}
 	if *addPub != "" {
-		if err := b.AddPub(CLIENT, *topicName, *addPub); err != nil {
+		if err := b.AddPub(*client, *topicName, *addPub); err != nil {
 			log.Fatal(err)
 		}
 	}
 	if *addSub != "" {
-		if err := b.AddSub(CLIENT, *topicName, *addSub); err != nil {
+		if err := b.AddSub(*client, *topicName, *addSub); err != nil {
 			log.Fatal(err)
 		}
 	}
 	if *revokeSub != "" {
-		if _, err := b.Instance.RevokeSub(b.Opts, common.HexToAddress(CLIENT), *topicName, *revokeSub); err != nil {
+		if _, err := b.Instance.RevokeSub(b.Opts, common.HexToAddress(*client), *topicName, *revokeSub); err != nil {
 			log.Fatal(err)
 		}
 	}
 	if *revokePub != "" {
-		if _, err := b.Instance.RevokePub(b.Opts, common.HexToAddress(CLIENT), *topicName, *revokePub); err != nil {
+		if _, err := b.Instance.RevokePub(b.Opts, common.HexToAddress(*client), *topicName, *revokePub); err != nil {
 			log.Fatal(err)
 		}
 	}

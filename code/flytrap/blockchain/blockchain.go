@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,9 +15,12 @@ import (
 )
 
 const (
-	ADDRESS          = "http://localhost:7545"
-	SERVER_PRIVKEY   = "privkey.asc"
-	FLYTRAP_CONTRACT = "0x1D199e5D181FC41a7B93e1c2610cFce1409186BF"
+	SERVER_PRIVKEY = "privkey.asc"
+)
+
+var (
+	ADDRESS          = os.Getenv("BLOCKCHAIN_ADDRESS")
+	FLYTRAP_CONTRACT = os.Getenv("FLYTRAP_CONTRACT")
 )
 
 const (
