@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/kdryja/thesis/code/flytrap/blockchain"
+	"github.com/kdryja/thesis/code/blockchain"
 )
 
 func (c *Cache) SaveSummary(t *time.Ticker) {

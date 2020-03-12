@@ -1,11 +1,10 @@
-module github.com/kdryja/thesis/code/flytrap
+module github.com/kdryja/thesis/code
 
-go 1.13
+go 1.14
 
 require (
 	github.com/eclipse/paho.golang v0.9.0
 	github.com/ethereum/go-ethereum v1.9.10
-	github.com/google/go-cmp v0.4.0
 	github.com/oschwald/geoip2-golang v1.4.0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 )

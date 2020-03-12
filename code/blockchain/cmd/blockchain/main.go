@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/kdryja/thesis/code/flytrap/blockchain"
+	"github.com/kdryja/thesis/code/blockchain"
 )
 
 var (

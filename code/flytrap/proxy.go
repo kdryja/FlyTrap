@@ -17,7 +17,7 @@ import (
 	"github.com/eclipse/paho.golang/packets"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/kdryja/thesis/code/flytrap/blockchain"
+	"github.com/kdryja/thesis/code/blockchain"
 	"golang.org/x/sync/errgroup"
 )
 

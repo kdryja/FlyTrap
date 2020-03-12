@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kdryja/thesis/code/flytrap/blockchain"
+	"github.com/kdryja/thesis/code/blockchain"
 )
 
 var (
