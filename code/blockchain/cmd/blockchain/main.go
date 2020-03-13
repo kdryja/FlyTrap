@@ -20,7 +20,7 @@ var (
 	revokeSub   = flag.String("rsub", "", "Reason to revoke as subscriber")
 	addContract = flag.Bool("new", false, "Whether to create new contract for flytrap")
 	topicName   = flag.String("topic", "MyTopic1", "name of the topic to modify")
-	client      = flag.String("client", os.Getenv("BLOCKCHAIN_*client"), "Public key of client to manipulate")
+	client      = flag.String("client", os.Getenv("BLOCKCHAIN_CLIENT"), "Public key of client to manipulate")
 	logsRead    = flag.Bool("logs", false, "Receive relevant event logs. Providing -client and -topic flags will restrict the search only to relevant fields.")
 	timestamp   = flag.String("date", "", "Provide date that should be searched for. E.g. 2020-02-29")
 	verbose     = flag.Bool("v", false, "Enable verbose mode")

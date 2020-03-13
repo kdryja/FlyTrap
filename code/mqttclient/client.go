@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -32,8 +34,9 @@ var (
 	sub          = flag.Int("sub", 0, "How many messages to receive via subscription")
 	pubMsg       = flag.String("msg", "Here Be Dragons", "message to be published")
 	topic        = flag.String("topic", "MyTopic1", "Topic for use for pub/sub")
-	cID          = flag.String("id", "ClientID", "ID of connecting client")
+	cID          = flag.String("id", "", "ID of connecting client")
 	privLocation = flag.String("priv", "privkey1.asc", "Location of your private key file")
+	forceSign    = flag.Bool("f", false, "Whether to force recomputation of signature")
 )
 
 func con(ip string) net.Conn {
@@ -58,6 +61,15 @@ func con(ip string) net.Conn {
 }
 
 func signKey() (string, string, error) {
+	if !*forceSign {
+		cachSig, err1 := ioutil.ReadFile("sig_" + *privLocation)
+		cachPub, err2 := ioutil.ReadFile("pub_" + *privLocation)
+		if err1 == nil && err2 == nil {
+			log.Print("Using cached signature & public key")
+			return string(cachSig), string(cachPub), nil
+		}
+		log.Print("Couldn't find cached signature, computing again")
+	}
 	priv, err := crypto.LoadECDSA(*privLocation)
 	if err != nil {
 		return "", "", err
@@ -67,6 +79,17 @@ func signKey() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	sSig := base64.StdEncoding.EncodeToString(sig)
+	sPub := base64.StdEncoding.EncodeToString(crypto.CompressPubkey(&priv.PublicKey))
+
+	// Caching values
+	if err := ioutil.WriteFile("sig_"+*privLocation, []byte(sSig), 0600); err != nil {
+		log.Fatal(err)
+	}
+	if err := ioutil.WriteFile("pub_"+*privLocation, []byte(sPub), 0600); err != nil {
+		log.Fatal(err)
+	}
+
 	return base64.StdEncoding.EncodeToString(sig), base64.StdEncoding.EncodeToString(crypto.CompressPubkey(&priv.PublicKey)), nil
 }
 
@@ -153,6 +176,12 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
+
+	if *cID == "" {
+		token := make([]byte, 4)
+		rand.Read(token)
+		*cID = hex.EncodeToString(token)
+	}
 
 	if *pub > 0 {
 		wg.Add(1)

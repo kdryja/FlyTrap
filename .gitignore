@@ -275,3 +275,8 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+*.crt
+*.asc
+*.key
+setEnv.sh
