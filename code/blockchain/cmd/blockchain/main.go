@@ -33,17 +33,12 @@ func main() {
 		log.Fatal(err)
 	}
 	var addr common.Address
-	if *addContract {
-		addr, _, _, err := blockchain.DeployFlytrap(b.Opts, b.Client, big.NewInt(0))
+	if *addContract && *contract == "" {
+		addr, err := b.GenerateContract(100)
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Printf("Generated new contract, address is: %s", addr.Hex())
-	}
-	if *contract == "" {
-		if addr, err = b.GenerateContract(100); err != nil {
-			log.Fatal(err)
-		}
 	} else {
 		addr = common.HexToAddress(*contract)
 	}

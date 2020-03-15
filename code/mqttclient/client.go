@@ -28,7 +28,6 @@ const (
 
 var (
 	connIP       = flag.String("ip", "localhost:8888", "location of MQTT broker")
-	authIP       = flag.String("auth", "localhost:8889", "location of auth server")
 	connTls      = flag.Bool("tls", true, "whether to use TLS")
 	pub          = flag.Int("pub", 0, "How many messages to publish")
 	sub          = flag.Int("sub", 0, "How many messages to receive via subscription")
