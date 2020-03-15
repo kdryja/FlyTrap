@@ -75,14 +75,12 @@ After successful connection, Client can proceed to send request for subscription
 
 Once the SUBSCRIBE message has been processed and approved by the broker, it will issue SUBACK message and remain connect to the client. From this point, any message that is published on the topic specified in SUBSCRIBE packet will be published (as PUBLISH packet) to every client currently subscribed to it. Of course, depending on requested QOS, the broker might then await for PUBACK message (or even issue extra messages such as PUBREC, PUBREL, PUBCOM). The diagram demonstrates a simple exchange with QOS set to 1. 
 
-\begin{table}[h]
+\begin{table}[]
 \centering
-\begin{tabular}{lllllllllllllll}
-\cline{1-14}
-\multicolumn{1}{|l|}{82} & \multicolumn{1}{l|}{0C} & \multicolumn{1}{l|}{00} & \multicolumn{1}{l|}{01} & \multicolumn{1}{l|}{00} & \multicolumn{1}{l|}{07} & \multicolumn{1}{l|}{F} & \multicolumn{1}{l|}{L} & \multicolumn{1}{l|}{Y} & \multicolumn{1}{l|}{T} & \multicolumn{1}{l|}{R} & \multicolumn{1}{l|}{A} & \multicolumn{1}{l|}{P} & \multicolumn{1}{l|}{00} &  \\ \cline{1-14}
-1                        & 2                       & 3                       & 4                       & 5                       & 6                       & 7                      & 8                      & 9                      & 10                     & 11                     & 12                     & 13                     & 14                      &  \\
-                         &                         &                         &                         &                         &                         &                        &                        &                        &                        &                        &                        &                        &                         &  \\
-                         &                         &                         &                         &                         &                         &                        &                        &                        &                        &                        &                        &                        &                         & 
+\begin{tabular}{llllllllllllll}
+\hline
+\multicolumn{1}{|l|}{82} & \multicolumn{1}{l|}{04} & \multicolumn{1}{l|}{00} & \multicolumn{1}{l|}{01} & \multicolumn{1}{l|}{00} & \multicolumn{1}{l|}{07} & \multicolumn{1}{l|}{F} & \multicolumn{1}{l|}{L} & \multicolumn{1}{l|}{Y} & \multicolumn{1}{l|}{T} & \multicolumn{1}{l|}{R} & \multicolumn{1}{l|}{A} & \multicolumn{1}{l|}{P} & \multicolumn{1}{l|}{00} \\ \hline
+1                        & 2                       & 3                       & 4                       & 5                       & 6                       & 7                      & 8                      & 9                      & 10                     & 11                     & 12                     & 13                     & 14                     
 \end{tabular}
 \caption{Example SUBSCRIBE to topic FlyTrap packet}
 \label{tab:sub_packet}
@@ -98,7 +96,19 @@ To close off MQTT, I also wanted to overview an example packet and dissect it by
   \item [14] Requested QOS
 \end{enumerate}
 
+\subsection{Blockchain}
+
+
 
 \section{Related Work}
 This section will talk about other scientific papers which had similar goal in mind, by combining  blockchain technologies with IoT or even MQTT brokers.
 
+\subsection{IoT, Hyperledger and GA}
+
+Attempts at combining IoT authorization with Blockchain has been made in the past. One of the examples is a recent work by scientists from Khon Kaen University in Thailan. In that paper \cite{klaokliang2018novel}, researchers look into Authorization Architecture for IoT (using MQTT broker as intermediary entity). They are arguing about benefits of combining any solutions for low-power devices and distributed architecture, which ultimately enables much better scalability and removes the single-point of failure.
+
+They are also utilising Hyperledger Fabric - another blockchain-based ledger. Compared to Ethereum, Hyperledger \cite{cachin2016architecture} is used mostly for Business-to-Business scenarios, as it does not feature any reward for mining, i.e. adding extra blocks to the chain. Transparency is also limited, as the information is no longer placed on a publicly available platform but rather depends on trusting the nodes connect to the network. Although I will spend some more time discussing differences in implementation and discussion chapters of this paper.
+
+Moreover, the focus of that paper is at finding optimized consensus algorithm, such that any latency caused by permission lookup is minimised. Scientists suggest using Genetic Algorithms to compose Optimal Consensus. Their experiments were executed on Kafta MQTT\cite{waehner_2019}. Thai researchers were able to achieve a performance of their solution called GA Kafka improved by 69.43\% compared to standard Kafta.
+
+Although, this paper doesn't take into consideration other parts of the AAA framework, focusing solely on Authorization. It has no mention of authenticating connecting clients or making them accountable by keeping audit crumbs of the most sensitive operations conducted on the chain. In my work, I will also be less focusing on the performance of the blockchain network itself, leaving this down to the blockchain itself. As mentioned in the previous section, Ethereum has has some rapid movements in terms of improving their consensus algorithms and moving away from Proof-of-Work instead aiming to implement Proof-of-Stake.
