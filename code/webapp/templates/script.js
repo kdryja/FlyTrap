@@ -1,7 +1,7 @@
 let auditTable = new Tabulator("#audit-table", {
   layout: "fitColumns",
   pagination: "local",
-  paginationSize: 7,
+  paginationSize: 10,
   columns: [
     {title: "Timestamp", field: "timestamp", width: 160, headerFilter: "input"},
     {title: "Topic", field: "topic", width: 150, headerFilter: "input"},
