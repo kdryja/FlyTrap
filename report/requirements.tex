@@ -18,6 +18,30 @@ In this chapter I will outline base requirements for the project along with samp
 \item As a data consumer, I'd like to access the broker from over a hundred parallel sensors, each publishing data independently.
 \end{enumerate}
 
+\subsection{Use-case Scenarios}
+A collection of real-world problems that this project is trying to address.
+\subsubsection{\textbf{Scenario \#1: Air Quality study in Texas}}
+\paragraph{\textbf{Scenario:}}
+Robert is working as a Research Fellow in a University located in Texas. The research aims at issuing air quality IoT sensors to staff across University, with the goal of capturing information such as pollution or carbon dioxide level to analyse contents of air in the state. Each sensor is issued to an individual taking part in an experiment (e.g. member of staff, lecturer, PhD student), which is based in a specific room on campus. Robert needs to be able to track the inventory and thus every sensor must be trackable down a person.
+
+Budget allows to issue up to 1000 sensors and Robert would like to use MQTT broker to receive the data from the IoT devices. Additionally, he would like to share the dataset with researches across the country, thus he makes the MQTT broker public. As per GDPR regulations, such data, containing full name, office location and detailed temperature readings is fully protected and needs to adhere to various governance requirements within European Union. Unfortunately, Robert does not have resources nor funding to ensure that the data is kept and flowing in GDPR compliant manner, thus he wants to restrict access to the broker only to people connecting from the US.
+\paragraph{\textbf{What problem is addressed here:}}
+Some companies do not have enough resources to ensure compliance with GDPR. But it doesn't relieve them from the necessity of compliance, if the data is accessible from the EU and if the data contains personal data of a EU citizen. So some people decide to block access from the EU altogether. 
+\subsubsection{\textbf{Scenario \#2: Data breach in an oil drilling facility}}
+\paragraph{\textbf{Scenario:}}
+Bob is a Chief Information Technology in a company Chell handling processing of oil and gas in Scotland. Bob's company also contracts many smaller companies which provide staffing and direct drilling services. Many sensors are used in the company, which are responsible for collecting data such as air pressure, humidity, occupancy on drilling platform or temperature. Those IoT sensors are utilising MQTT Broker, which is restricted only to authorised Chell employees.
+
+Unfortunately, due to unrelated reasons, access to the broker has been compromised and thus allowing 3rd parties to potentially peek into the data flowing through. Bob is approached by Judy, who works with UK Government and is concerned about the leakage. Judy asks Bob to outline who might have had access to the leaked information and what the leaked information contained, as described by Article 33 and 34 of GDPR. Judy also instructs Bob to inform all people and contractors that might have been affected by the breach
+\paragraph{\textbf{What problem is addressed here:}}
+Compliance with Art. 33 \& 34 of GDPR. Vanilla MQTT has no logging on who might have access the information, nor what information was accessed at specific timelines.
+\subsubsection{\textbf{Scenario \#3: Unsatisfied Customer}}
+\paragraph{\textbf{Scenario:}}
+Mary recently purchased a smart assistant, which comes with several smart sensors to be placed around the house. Those sensors consist of devices such as smart doorbell, smart thermostat, smart kettle or even smart window blinds - all produced and managed by a company called Moogle. Mary can use her mobile phone to change the temperature at her home or pull up the blinds remotely. Unfortunately, due to the poor sensor quality and concerns about Moogle's management of personal information, Mary decided to return all the sensors and cease further usage, she reaches out to Moogle's representative - Matt.
+
+Matt knows that Moogle is using MQTT brokers to connect their smart sensors together and then use the phone app to issue commands back to them through the broker. Although phone app is not the only piece of software that has access to the data from the smart sensors. Those are also consumed by analytics teams in order to help Moogle created better products. Matt is now tasked with identifying which internal analysis services might have accessed Mary's sensors in order to erase this information, since it's a GDPR requirement, also called "right to be forgotten".
+\paragraph{\textbf{What problem is addressed here:}}
+Again, GDPR comes into action here, in particular Article 17 - Right to erasure. Moogle needs to permanently erase all trail coming from Mary's sensors, that includes any analytics datasets. Since those services are using MQTT brokers, there is no access trail and without proper infrastructure, impossible to go in the past and track which services were accessing the data
+
 \subsection{Functional Requirements}
 
 The user stories can then be further formulated into the following functional requirements:
