@@ -19,31 +19,47 @@ In this chapter, I will outline base requirements for the project along with sam
 \end{enumerate}
 
 \subsection{Use-case Scenarios}
-A collection of real-world problems that this project is trying to address.
+Below I have listed a collection of stories which relate to real-life scenarios (though they are not real, any similarities are coincidental) and present various problems faced in different areas - both in industrial and commercial environments. FlyTrap is looking to address the issues surfaced in those short stories. In the Evaluation chapter of this paper, each of them will be referred to and tested on whether it is indeed helpful and how the discussed solution solves the problems.
 \\
-\subsubsection{Scenario \#1: Air Quality study in Texas}
+\subsubsection{Scenario \#1: Air Quality study in the UK}
 \paragraph{\textbf{Scenario:}}
-Robert is working as a Research Fellow at a University located in Texas. The research aims at issuing air quality IoT sensors to staff across University, intending to capture information such as pollution or carbon dioxide level to analyse contents of air in the state. Each sensor is issued to an individual taking part in an experiment (e.g. member of staff, lecturer, PhD student), which is based in a specific room on campus. Robert needs to be able to track the inventory, and thus every sensor must be trackable down a person.
+Robert is working as a Research Fellow at a University located in Manchester. The research aims at issuing air quality IoT sensors to staff across University, intending to capture information such as pollution or carbon dioxide level to analyse contents of air in the state. Each sensor is issued to an individual taking part in an experiment (e.g. member of staff, lecturer, PhD student), which is based in a specific room on campus. Robert needs to be able to track the inventory, and thus every sensor must be traceable down to a person.
 
-The budget allows to issue up to 1000 sensors, and Robert would like to use MQTT broker to receive the data from the IoT devices. Additionally, he would like to share the dataset with researches across the country; thus, he makes the MQTT broker public. As per GDPR, such data, containing full name, office location and detailed temperature readings are fully protected and needs to adhere to various governance requirements within the European Union. Unfortunately, Robert does not have resources nor funding to ensure that the data is kept and flowing in GDPR compliant manner; thus he wants to restrict access to the broker only to people connecting from the US.
+The budget allows to issue up to 1000 sensors, and Robert would like to use MQTT broker to receive the data from the IoT devices. Additionally, he would like to share the dataset with researches across the country; thus, he makes the MQTT broker public. As per GDPR, such data, containing full name, office location and detailed temperature readings, is fully protected and needs to adhere to various governance requirements within the European Union. This information should also be stored only within the jurisdiction, that is, only within EU, to ensure enforceability of GDPR. Robert needs to make sure that only researchers that are located in Europe can access the date and everyone else (for example, people from the USA or Russia) will be denied access.
+
 \paragraph{\textbf{What problem is addressed here:}}
-Some companies do not have enough resources to ensure compliance with GDPR. However, it does not relieve them from the necessity of compliance, if the data is accessible from the EU and if the data contains personal data of an EU citizen. So some people decide to block access from the EU altogether. 
+Data containing personal information of European citizens needs to be handled in GDPR compliant way. This cannot be ensured if the information is accessible outside EU, as there would be no jurisdiction or enforceability once the data leaves the region. The person responsible for data storage needs to ensure that no people outside EU can access it.
 \\
 \subsubsection{Scenario \#2: Data breach in an oil drilling facility}
 \paragraph{\textbf{Scenario:}}
 Bob is a Chief Information Technology in a company Chell handling processing of oil and gas in Scotland. Bob's company also contracts many smaller companies which provide staffing and direct drilling services. Many sensors are used in the company, which are responsible for collecting data such as air pressure, humidity, occupancy on drilling platform or temperature. Those IoT sensors are utilising MQTT Broker, which is restricted only to authorised Chell employees.
 
-Unfortunately, due to unrelated reasons, access to the broker has been compromised and thus allowing third parties to peek into the data flowing through potentially. Bob is approached by Judy, who works with the UK Government and is concerned about the leakage. Judy asks Bob to outline who might have had access to the leaked information and what the leaked information contained, as described by Article 33 and 34 of GDPR. Judy also instructs Bob to inform all people and contractors that might have been affected by the breach
+Unfortunately, due to unrelated reasons, access to the broker has been compromised and thus allowing third parties to peek into the data flowing through potentially. Bob is approached by Judy, who works with the team responsible to trace the severity of leakage and determine the potential scope \& damages.. Judy asks Bob to outline who might have had access to the leaked information and what the leaked information contained. Judy also instructs Bob to inform all people and contractors that might have been affected by the breach.
 \paragraph{\textbf{What problem is addressed here:}}
-Compliance with Art. 33 \& 34 of GDPR. Vanilla MQTT has no logging on who might have access to the information, nor what information was accessed at specific timelines.
+Companies that use MQTT brokers to store information which are confidential and contain trade secrets of high commercial value want to determine the range of leak that happened. This is part of disaster recovery procedure and is important for business continuity; i.e. determine how much of data has leaked and what kind of information was exposed to malicious actors. 
 \\
 \subsubsection{Scenario \#3: Unsatisfied Customer}
 \paragraph{\textbf{Scenario:}}
-Mary recently purchased a smart assistant, which comes with several smart sensors to be placed around the house. Those sensors consist of devices such as a smart doorbell, smart thermostat, smart kettle or even smart window blinds - all produced and managed by a company called Moogle. Mary can use her mobile phone to change the temperature at her home or pull up the blinds remotely. Unfortunately, due to the poor sensor quality and concerns about Moogle's management of personal information, Mary decided to return all the sensors and cease further usage, she reaches out to Moogle's representative - Matt.
+Mary recently purchased a smart assistant, which comes with several smart sensors to be placed around the house. Unfortunately, Mary decided to return all the sensors and cease further usage, she reaches out to Moogle's representative - Matt.
 
-Matt knows that Moogle is using MQTT brokers to connect their smart sensors and then use the phone app to issue commands back to them through the broker. Although the phone app is not the only piece of software that has access to the data from the smart sensors. Analytics teams also consume those in order to help Moogle create better products. Matt is now tasked with identifying which internal analysis services might have accessed Mary's sensors in order to erase this information since it is a GDPR requirement, also called "right to be forgotten".
+Matt knows that Moogle is using MQTT brokers to connect their smart sensors and then use the phone app to issue commands back to them through the broker. Although the phone app is not the only piece of software that has access to the data from the smart sensors. Analytics teams also consume those in order to help Moogle create better products. Those servers have their own data storage capabilities and replicate the data that they consume. Matt is now tasked with identifying which internal analysis services might have accessed Mary's sensors in order to erase this information since it is on of GDPR requirements, also called "right to be forgotten".
 \paragraph{\textbf{What problem is addressed here:}}
-Again, GDPR comes into action here, in particular Article 17 - Right to erasure. Moogle needs to permanently erase all trail coming from Mary's sensors, that includes any analytics datasets. Since those services are using MQTT brokers, there is no access trail and without proper infrastructure, impossible to go in the past and track which services were accessing the data
+Again, GDPR comes into action here, in particular Article 17 - Right to erasure. Moogle needs to permanently erase all trail coming from Mary's sensors, that includes any analytics datasets. Since those services are using MQTT brokers, there is no access trail and without proper infrastructure, impossible to go in the past and track which services were accessing the data.
+\\
+\subsubsection{Scenario \#4: Information monetization}
+\paragraph{\textbf{Scenario:}}
+Frank owns several farm fields in Scottish Highlands. As part of the ongoing digitalisation, he decided to purchase some IoT sensors to learn more about the environment his farms are located in. Some of the sensors include specialised soil acidity meters capable of measuring pH or determine how moist it is.
+
+He decided to connect all sensors to one MQTT broker for ease of access and started to consume the information through provided mobile application. As the equipment was quite expensive, Frank would like to also sell access to the sensors to the interested parties, such as other land owners or University researchers looking to learn more about the soil quality in the area. No personal information is included, though the data is highly dependant on the location (which currently only Frank can access to) and thus might be also useful for other people. 
+\paragraph{\textbf{What problem is addressed here:}}
+Selling data is a very lucrative business, especially if the data is valuable and has potential audience. MQTT does not have provisions to accommodate such requirements - anything like that would need to either be stored in some persistent location (and then processed for commercial purposes) or routed through extra layer of verification.
+\\
+\subsubsection{Scenario \#5: Securing access to the broker}
+Bob works for a start-up company contracted by the local council to deploy smart sensors across the city to measure various statistics, such as air quality, traffic intensity, parking spot occupancy. All of those sensors are connected to the MQTT broker, which later can also be accessed by third parties - providing they have a legitimate and approved reason. The MQTT broker is accessible by people that might not have overlapping permissions, for example company A can access only data set Y and company B can access only data set X - both X \& Y are published on the same MQTT broker.
+
+Bob is aware of the vanilla implementation of username/password authentication for MQTT brokers, but is concerned about the insufficient security in case of leakage. He also already is using Ethereum within the company to hold internal data, so can issue more wallets - if necessary.
+\paragraph{\textbf{What problem is addressed here:}}
+Security capabilities of vanilla MQTT Brokers can be found lackluster and not sufficient for many needs. Using symmetric password authentication can be very damaging if the said password leaks to third parties. For people that are already using related blockchain technologies, the transition to FlyTrap would be even simpler, as it can make use of any and every wallet compatible with ETH.
 
 \subsection{Functional Requirements}
 
@@ -71,5 +87,3 @@ In addition to the functional, it is also vital to mention the following non-fun
 \item[\textbf{(NFR4)}] The system should only be based on \textbf{Free and Open-Source Software}. Since the ultimate aim is to provide increase security, keeping the source open would allow any potential users to inspect its operation. Furthermore, third party security audits can happen without the system owner's intervention.
 \item[\textbf{(NFR5)}] The system should be capable to run inside \textbf{virtualised container}, to ensure that it's platform agnostic.
 \end{itemize}
-
-\section{Architecture}
