@@ -65,7 +65,7 @@ First and foremost, the consumer layer. This part of the framework handles all c
 \subsection{MQTT Client}
 As mentioned above, FlyTrap makes use of the introduced in MQTT v5.0 User Properties\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901068}, allowing clients to include key-value pairs in the MQTT packets, which then can be utilised by the brokers (or other middleware). That's also where the signature and public key is being placed by the client when attempting connection with FlyTrap - and that's also the need for a custom client, since normal clients are not capable of producing highly specilised signatures for the purposes of connecting with Ethereum blockchain.
 
-It is important to point out, the client is only slightly altered to provide (and compute if needed) the signature from public/private key pair. It is not a crucial system of the framework, as any client capable of setting User Properties for MQTT message would be sufficient, though for the purposes of this dissertation, it is included.
+It is important to point out, the client is only slightly altered to provide (and compute if needed) the signature from public/private key pair. It is not a crucial system of the framework, as any client capable of setting User Properties for MQTT message would be sufficient, though for the purposes of this dissertation, custom implementation has also been designed and included.
 \subsection{Secure Proxy}
 In order to enable FlyTrap to make decisions on whether the requests for publishing or subscribing should be accepted or denied, a secure proxy needs to be established between the clients and the MQTT Broker. As the communication between the broker and the consumers happens on Transport Layer, it is possible to insert a middleman who would be capable of inspecting the packets flowing through, dissecting it for relevant information and finally make a decision about their future journey - all without the client ever knowing that someone has intercepted the connection. 
 \begin{figure}[h]
@@ -89,10 +89,34 @@ TLS sessions can be summarised in the following steps:
 
 It's important to point out, that due to step 3 requiring server's certificate, FlyTrap will need to either obtain a copy of broker's certificates or generate a new pair, ensuring that the connecting clients will trust it. Though, secure TLS connection remains optional, as it is understandable that sometimes enhanced security might cause undesirable performance losses or the MQTT broker simply doesn't support TLS connections - TLS will be configurable via command line arguments.
 
+For every new connection, a new thread (or, go routine) is spawned which has its own context and is separated from others.
+
 \subsection{Authenticity of public keys}
+Public Keys from the Ethereum wallet are used as an identifier when determining whether client can access given resource or not. Though it only handles a part of the problem. Public Keys, by definition, are public, meaning that anyone could impersonate legitimate holders of the public/private key. This calls for an approach similar to the Certificate Authority problem when attempting encrypted HTTPS connections. Unfortunately, FlyTrap cannot expect every IoT device to have its own set of certificates, which would then need to be trusted by the framework in order to become recognisable - as those devices are often of limited storage and power.
 
+To solve the problem of establishing whether the person presenting a public key also holds a corresponding key, signatures are used. Below you can see two figures, each outlining client side and FlyTrap side of the signing/verification process.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\textwidth]{sign}
+    \caption{Client signing Public Key and attaching it to the message}
+    \label{fig:sign}
+\end{figure}
+
+Figure \ref{fig:sign} shows how client - in possession of public/private key pair produces a signature which then is attached to the final MQTT CONNECT packet. First, it hashes the public key using Keccak-256 algorithm \cite{bertoni2009keccak} (commonly used in Ethereum, e.g. for block hashes), then it uses the private key to sign this hash and attaches obtained signature to the user properties part of the MQTT CONNECT message. Plain-text version of the public key is also attached in another field.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\textwidth]{verify}
+    \caption{FlyTrap verifying the signature}
+    \label{fig:verify}
+\end{figure}
+
+Then, as per figure \ref{fig:verify} FlyTrap receives the CONNECT packet and extracts both the signature \& public key. As the corresponding private key for the public key was used to produce the signature, frameworks verifies this thanks to Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - and if so, then FlyTrap can hash the public key and compare the values. This gives definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
 \subsection{Protecting from brute-force attacks}
+Some of the failed attempts can result in persistent log to blockchain, which often implicates costs - especially if FlyTrap is operating on a public blockchain. This can open a door for malicious actors attempting to drain the framework from available funds by logging a lot of operations in a short span of time. Distributed Denial of Service (DDoS) attacks can also occur and overload the server, which - depending on hardware - could only handle a limited number of simultaneous connections.
 
+To combat those problems, framework will track any failed authentication attempts in an internal dictionary, mapping IP address to the number of failed attempts. This dictionary then will be consulted whenever a new connection is initiated. If it is, then the TCP link will be shut down and client informed that it is currently blacklisted. Though to give benefit of a doubt, there is a grace period of 2 prior failed attempts before a timed ban is applied. Whenever failed authentication occurs, the counter is increased by one - and if that count increases 3, the connection is terminated and dictionary updated with time 5 minutes in the future - that's the earliest time given IP can attempt connection again.
 \section{Broker Layer}
 \section{Blockchain Layer}
 \subsection{Data model}
