@@ -98,7 +98,7 @@ To solve the problem of establishing whether the person presenting a public key 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.75\textwidth]{sign}
+    \includegraphics[width=0.7\textwidth]{sign}
     \caption{Client signing Public Key and attaching it to the message}
     \label{fig:sign}
 \end{figure}
@@ -112,13 +112,19 @@ Figure \ref{fig:sign} shows how client - in possession of public/private key pai
     \label{fig:verify}
 \end{figure}
 
-Then, as per figure \ref{fig:verify} FlyTrap receives the CONNECT packet and extracts both the signature \& public key. As the corresponding private key for the public key was used to produce the signature, frameworks verifies this thanks to Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - and if so, then FlyTrap can hash the public key and compare the values. This gives definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
+Then, as per figure \ref{fig:verify}, FlyTrap receives the CONNECT packet and extracts both the signature \& public key. As the corresponding private key for the public key was used to produce the signature, frameworks verifies this thanks to Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - and if so, then FlyTrap can hash the public key and compare the values. This gives definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
 \subsection{Protecting from brute-force attacks}
 Some of the failed attempts can result in persistent log to blockchain, which often implicates costs - especially if FlyTrap is operating on a public blockchain. This can open a door for malicious actors attempting to drain the framework from available funds by logging a lot of operations in a short span of time. Distributed Denial of Service (DDoS) attacks can also occur and overload the server, which - depending on hardware - could only handle a limited number of simultaneous connections.
 
 To combat those problems, framework will track any failed authentication attempts in an internal dictionary, mapping IP address to the number of failed attempts. This dictionary then will be consulted whenever a new connection is initiated. If it is, then the TCP link will be shut down and client informed that it is currently blacklisted. Though to give benefit of a doubt, there is a grace period of 2 prior failed attempts before a timed ban is applied. Whenever failed authentication occurs, the counter is increased by one - and if that count increases 3, the connection is terminated and dictionary updated with time 5 minutes in the future - that's the earliest time given IP can attempt connection again.
 \section{Broker Layer}
+
+This layer is where the communication with the actual MQTT Broker occurs. Normally, it would be desirable to place both FlyTrap and the broker (e.g. Mosquitto) on the same machine or at least network to minimise the latency - though it's not necessary. Depending on the outcome of the authorisation from the Client Layer, every packet from the client is forwarded to the broker and every packet from the broker sent back to the client. Since each connection is an individual thread, it also maintains information such as originating (\& destination) address and port - and this information will persist as long as the original connection Client <> FlyTrap remains open - which will only be terminated if client times out, requests disconnection or for any reason authentication to FlyTrap fails.
+
+Similar to the section discussing encrypted connection, FlyTrap is capable of either connecting with TLS-capable brokers or via plain TCP if desired (though keeping the security implication in mind, as everyone intercepting the connection would be able to read the payload).
+
 \section{Blockchain Layer}
+In this layer, communication with the Ethereum Node occurs. As described in architecture section, FlyTrap can either read or write new data onto the chain. FlyTrap should be allocated its own smart contract containing chain code capable of verifying connecting clients and relevant data structures. Once that's done, 
 \subsection{Data model}
 \subsection{Report Generation}
 \subsection{Interacting with blockchain}
