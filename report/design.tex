@@ -2,46 +2,80 @@
 In this chapter, I will talk in depth the elements that I created during this project and how they inter-connect. You can expect a design charts showcasing high-level overview, alongside dividing it onto smaller subsections - each independent and capable of running on its own. I will also provide explanation on novel approaches such as verifying the authenticity of the connecting clients, data model stored on blockchain or how the connection is secured from man-in-the-middle attacks through TLS encryption.
 
 \section{Architecture}
-
+This section includes the diagram of them system and two sample workflows demonstrating how packets are flowing through the framework.
 \subsection{Overview}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=1.05\textwidth]{flytrap}
+    \frame{\includegraphics[width=\textwidth]{flytrap}}
     \caption{FlyTrap high-level architecture overview}
     \label{fig:flytrap}
 \end{figure}
+Figure \ref{fig:flytrap} presents an overview of the system, decomposing it onto four layers, each responsible for different part of the framework. It also demonstrates how those layers are coupled and the direction of data flowing between them.
+
+To overview, we can distinguish four layers:
+\begin{description}
+    \item[Consumer Layer] - layer responsible for interacting with end-devices. To them, FlyTrap should be indistinguishable from normal MQTT broker and thus accepts/responds with MQTT v5.0 compliant TCP/TLS packets. In order to compute the signature and attach it to 
+    \item[Consumer Layer] - layer where FlyTrap acts like a client for MQTT Broker. Similar to Consumer Layer, all packets sent by FlyTrap need to be compliant with MQTT standard in order to receive valid responses from the broker. In this situation, used MQTT broker is not relevant - as long as it implements the standard.
+    \item[Blockchain Layer] - layer in which FlyTrap performs communication with Ethereum node through a separate CLI. FlyTrap is capable of either reading the past contracts/transcations or submitting new ones. That's also the only way to amend the state of the blockchain - given the master private key has remained secret.
+    \item[Presentation Layer] - layer used by FlyTrap's endusers which allows to overview the state of the blockchain in a user-friendly way, easily extracting most relevant information such as recent access changes or audit trail for major operations on the chain.
+\end{description}
 
 
 \subsection{Sample successful PUBLISH workflow}
+To provide further context, figure \ref{fig:workflow_success} provides an example process in which a client wants to publish a message to the broker and is successful in doing so. The diagram shows step-by-step logic performed at each stage of the connection, until client receives the response. I'll annotate each step with either \textbf{BL} - Blockchain Layer, \textbf{CL} - Consumer Layer or \textbf{ML} - MQTT Broker Layer to signify on which layer this step is taking place on.
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{workflow_success}
+    \includegraphics[width=0.8\textwidth]{workflow_success}
     \caption{Example successful workflow to publish a message on the broker through FlyTrap}
     \label{fig:workflow_success}
 \end{figure}
+
+Explanation of each step:
+\begin{enumerate}\addtocounter{enumi}{-1}
+    \item Marked as optional, since each Client can accept pre-computed signature, which can be loaded onto the device; this can be helpful for situations where there is not enough computational power for calculations. (\textbf{CL})
+    \item Client sends CONNECT packet, including signature + public key in the optional fields of MQTT message. (\textbf{CL})
+    \item FlyTrap will extract the signature from the optional field and then verify its integrity. It will also check if the client has not been attempting many unsuccessful connections. Finally, FlyTrap will repond with CONNACK, signaling to the client that it may now submit relevant payload packets. If the integrity check has failed, CONNACK would also have a flipped flag indicating rejected connection and cease further communication. (\textbf{CL})
+    \item Client will now forward the relevant PUBLISH/SUBSCRIBE packet to FlyTrap (as it still believes that it's a regular MQTT broker). (\textbf{CL})
+    \item FlyTrap will now extract requeste topic from the MQTT packet and communicate with the Blockchain, presenting Public Key and requested topic to verify whether data can be accessed. For this example, the access check was successful. (\textbf{BL})
+    \item FlyTrap proxies (unchanged) PUBLISH packet to the actual MQTT broker. (\textbf{ML})
+    \item MQTT broker will now respond with PUBACK, indicating successful PUBLISH. (\textbf{ML})
+    \item Finally, FlyTrap will proxy the same PUBACK packet back to the initial client to let them know that the operation was successful - and at the end, gracefully terminate the connection. (\textbf{CL})
+\end{enumerate}
+
 \subsection{Sample failed PUBLISH workflow}
+Operation similar as in the previous section with the difference being that this time connection is not allowed, as the presented Public Key is not allowed to publish information on the given topic. For the brevity sake, I will skip explaining steps 0-3 - as they are identical as with the successful scenario. I will also use the same notation to signify which layer is responsible for this operation.
+
+\begin{enumerate}\addtocounter{enumi}{4}
+    \item Having verified authenticity of Public Key, FlyTrap again tries to verify with the Smart Contract whether the client can access the topic. This time though, the reponse is negative and the client is not allowed to publish on the requested topic.
+    \item FlyTrap will send PUBACK back to the client, setting reason code\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901124} to "Not authorized", at the same time terminating the connection with the client. To client, the situation is identical as with providing invalid username/password for a vanilla MQTT broker.
+    \item Framework will verify with the cached values to check if the originating IP has not exceeded maximum number of allowed tries. If it did, it can place it on a blacklist and every subsequent connection will be denied for the specified time. In this example, that's 5 minutes. This step is optional
+    \item If the ban happens, FlyTrap will also register a new transaction on the blockchain to persistently log this event for the purposes of checking potential attack spikes or generating reports w.r.t.  captured data. This step is also optional, as it depends on the previous one.
+\end{enumerate}
+
+Note: as you can see, the MQTT Broker is never connected to nor contacted with the potentially malicious message. FlyTrap rejects the message and forbids the connection. 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{workflow_fail}
+    \includegraphics[width=0.9\textwidth]{workflow_fail}
     \caption{Example failed workflow to publish a message on the broker through FlyTrap}
     \label{fig:workflow_fail}
 \end{figure}
 
 \section{Consumer Layer}
-
+\subsection{MQTT Client}
+\subsection{Calculating Signature}
 \subsection{Secure Proxy}
-In order to enable FlyTrap to make decisions on whether the requests for publishing or subscribing should be accepted or denied, a secure proxy needs to be established between the clients and the MQTT Broker. As the communication between the broker and the consumers happens on Transport Control Layer, it is possible to insert a middleman who would be capable of inspecting the packets flowing through, dissecting it for relevant information and finally make a decision about their future journey - all without the client ever knowing that someone has intercepted the connection. 
+In order to enable FlyTrap to make decisions on whether the requests for publishing or subscribing should be accepted or denied, a secure proxy needs to be established between the clients and the MQTT Broker. As the communication between the broker and the consumers happens on Transport Layer, it is possible to insert a middleman who would be capable of inspecting the packets flowing through, dissecting it for relevant information and finally make a decision about their future journey - all without the client ever knowing that someone has intercepted the connection. 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{tls}
     \caption{FlyTrap acting as a proxy}
     \label{fig:tls}
 \end{figure}
-Figure \ref{fig:tls} demonstrates all 3 possibilities when client attempts connection to a broker. In the Request \#1, FlyTrap will dissect the packet and confirm that the phone indeed can be allowed to access specific topic and then start bidirectional proxy with the broker, passing the TCP packets between two. Request \#2 shows that the same packet can be used for vanilla MQTT Broker without FlyTrap, thus decoupling the client and secure proxy, as the former can be used without the need to change the latter. Finally, for the third request, it is found that the client cannot access the requested resource and will be presented with CONACK response, with access denied flag set, terminating the connection.
+Figure \ref{fig:tls} demonstrates all 3 possibilities when client attempts connection to a broker. In the Request \#1, FlyTrap will dissect the packet and confirm that the phone indeed can be allowed to access specific topic and then start bidirectional proxy with the broker, passing the TCP packets between two. Request \#2 shows that the same packet can be used for vanilla MQTT Broker without FlyTrap, thus decoupling the client and secure proxy, as the former can be used without the need to change the latter. Finally, for the third request, it is found that the client cannot access the requested resource and will be presented with CONACK response, with access denied flag set, terminating the connection. Though, in order to make such decisions, the proxy needs to inspect the contents of the packets.
 
 Although this solution enough will not be sufficient, as quickly as FlyTrap can tap into the connection, the same can be assumed for potential malicious actors, which could be listening on the flowing through packets. The solution will support an extension to standard TCP - Transport Layer Security, or TLS for short, responsible for encrypting the TCP packets, significantly reducing the threat of man-in-the-middle attacks.
 
-TLS sessions can be summarized in the following steps:
+TLS sessions can be summarised in the following steps:
 \begin{enumerate}
 \item Initiate standard TCP session
 \item ClientHello with client's cypher capabilities 
@@ -50,7 +84,7 @@ TLS sessions can be summarized in the following steps:
 \item Encrypted session starts
 \end{enumerate}
 
-It's important to point out, that due to step 3 requiring server's certificate, FlyTrap will need to either obtain a copy of broker's certificates or generate a new pair, ensuring that the connecting clients will trust it.
+It's important to point out, that due to step 3 requiring server's certificate, FlyTrap will need to either obtain a copy of broker's certificates or generate a new pair, ensuring that the connecting clients will trust it. Though, secure TLS connection remains optional, as it is understandable that sometimes enhanced security might cause undesirable performance losses or the MQTT broker simply doesn't support TLS connections - TLS will be configurable via command line arguments.
 
 \subsection{Authenticity of public keys}
 

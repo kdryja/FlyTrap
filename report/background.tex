@@ -165,8 +165,10 @@ However, what if we do not care about full decentralisation and want to avoid ex
 Proof-of-Work proved itself to be a tremendous waste of energy and resources, with Bitcoin using it solely for authorising the transaction and nothing beyond it. That particular period was also a time when a lot of different currencies started showing up, as Bitcoin's source code was open, everybody was allowed to host their network. Ethereum was one of them, but it was also the first to introduce a concept known as smart-contracts - a way to put the proof-of-work energy to some use (though still a lot of was wasted), introduced in 2015 by \citet{buterin2014ethereum}. The network also gave birth to so-called decentralised applications (or Dapps for short), through smart-contracts. Smart-contract can be understood as pieces of code which can get executed on the blockchain, written in a specialised language called Solidity inside EVM (Ethereum Virtual Machine). The transactions were no longer limited to the information about transferring currency between accounts, but also could execute code and act as a persistent database, which could not be altered by anyone and change history was publicly available.
 
 
-\section{IoT, Hyperledger and GA}
+\section{Related Work}
+In this section, I would like to point towards recent research that also had in mind imporving the security of IoT by looking into combining it with Blockchain platforms. Below, I describe two papers - both concluding with positive aspect of such approaches.
 
+\subsection{IoT, Hyperledger and GA}
 Attempts at combining IoT authorisation with blockchain has been made in the past. One of the examples is a recent work by scientists from Khon Kaen University in Thailand. In that paper \cite{klaokliang2018novel}, researchers look into Authorization Architecture for IoT (using MQTT broker as an intermediary entity). They are arguing about the benefits of combining any solutions for low-power devices and distributed architecture, which ultimately enables much better scalability and removes the single point of failure.
 
 They are also utilising Hyperledger Fabric - another blockchain-based ledger. Compared to Ethereum, Hyperledger \cite{cachin2016architecture} is used mostly for Business-to-Business scenarios, as it does not feature any reward for mining, i.e. adding extra blocks to the chain. Transparency is also limited, as the information is no longer placed on a publicly available platform but rather depends on trusting the nodes connect to the network although I will spend some more time discussing differences in implementation and discussion chapters of this paper.
@@ -175,4 +177,8 @@ Moreover, the focus of that paper is at finding optimised consensus algorithm, s
 
 Although this paper does not take into consideration other parts of the AAA framework, focusing solely on Authorisation. It has no mention of authenticating connecting clients or making them accountable by keeping audit crumbs of the most sensitive operations conducted on the chain. In my work, I will also be less focus on the performance of the blockchain network itself, leaving this down to the blockchain itself. As mentioned in the previous section, Ethereum has had some rapid movements in terms of improving their consensus algorithms and moving away from Proof-of-Work instead aiming to implement Proof-of-Stake.
 
-\section{Extra paper here}
+\subsection{IoT Communication using Blockchain}
+
+In a related paper, scientists from Insitut Teknologi Bandung \citep{fakhri2018secure} offer a solution of replacing MQTT protocol with smart contracts, arguing increased level of security and resilience to the outside threats. The approach is somewhat different, as they are comparing the MQTT protocol with the option of using Ethereum for communication. The evaluation consisted of performing attacks on the networks. They also experimented with the SHA-256 \cite{gilbert2003security} algorithm commonly used for producing message hashes and compared its avalananche effect with Keccak-256 used by Ethereum.
+
+Research is concluded with findings that Ethereum's algorithms are more resilient than direct hashing + encryption approach and suggests further study in combining blockchain with IoT technologies, suggesting great security gains.
