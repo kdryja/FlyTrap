@@ -47,7 +47,7 @@ Operation similar as in the previous section with the difference being that this
 
 \begin{enumerate}\addtocounter{enumi}{4}
     \item Having verified authenticity of Public Key, FlyTrap again tries to verify with the Smart Contract whether the client can access the topic. This time though, the reponse is negative and the client is not allowed to publish on the requested topic.
-    \item FlyTrap will send PUBACK back to the client, setting reason code\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901124} to "Not authorized", at the same time terminating the connection with the client. To client, the situation is identical as with providing invalid username/password for a vanilla MQTT broker.
+    \item FlyTrap will send PUBACK back to the client, setting reason code\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901124} to "Not authorized", at the same time terminating the connection with the client. To client, the situation is identical as with providing invalid username/password for a vanilla MQTT broker.
     \item Framework will verify with the cached values to check if the originating IP has not exceeded maximum number of allowed tries. If it did, it can place it on a blacklist and every subsequent connection will be denied for the specified time. In this example, that's 5 minutes. This step is optional
     \item If the ban happens, FlyTrap will also register a new transaction on the blockchain to persistently log this event for the purposes of checking potential attack spikes or generating reports w.r.t.  captured data. This step is also optional, as it depends on the previous one.
 \end{enumerate}
@@ -61,8 +61,11 @@ Note: as you can see, the MQTT Broker is never connected to nor contacted with t
 \end{figure}
 
 \section{Consumer Layer}
+First and foremost, the consumer layer. This part of the framework handles all connections between clients attempting to PUBLISH or SUBSCRIBE to data. To them, FlyTrap should be indistinguishable from a vanilla MQTT broker, which should be accepting all regular MQTT payloads. Though since every MQTT client produced in this project can connect with every MQTT Broker, a specific client is required for connection with FlyTrap - which is further explained in the section below. Moreover, an approach of identifing whether the client holds a Private Key for the presented Public Key is also needed and explained. 
 \subsection{MQTT Client}
-\subsection{Calculating Signature}
+As mentioned above, FlyTrap makes use of the introduced in MQTT v5.0 User Properties\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901068}, allowing clients to include key-value pairs in the MQTT packets, which then can be utilised by the brokers (or other middleware). That's also where the signature and public key is being placed by the client when attempting connection with FlyTrap - and that's also the need for a custom client, since normal clients are not capable of producing highly specilised signatures for the purposes of connecting with Ethereum blockchain.
+
+It is important to point out, the client is only slightly altered to provide (and compute if needed) the signature from public/private key pair. It is not a crucial system of the framework, as any client capable of setting User Properties for MQTT message would be sufficient, though for the purposes of this dissertation, it is included.
 \subsection{Secure Proxy}
 In order to enable FlyTrap to make decisions on whether the requests for publishing or subscribing should be accepted or denied, a secure proxy needs to be established between the clients and the MQTT Broker. As the communication between the broker and the consumers happens on Transport Layer, it is possible to insert a middleman who would be capable of inspecting the packets flowing through, dissecting it for relevant information and finally make a decision about their future journey - all without the client ever knowing that someone has intercepted the connection. 
 \begin{figure}[h]
