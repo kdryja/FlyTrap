@@ -6,7 +6,7 @@ This section includes the diagram of them system and two sample workflows demons
 \subsection{Overview}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=1.1\textwidth]{flytrap}
+    \makebox[\textwidth][c]{\includegraphics[width=1.2\textwidth]{flytrap}}
     \caption{FlyTrap high-level architecture overview}
     \label{fig:flytrap}
 \end{figure}
@@ -103,7 +103,7 @@ To solve the problem of establishing whether the person presenting a public key 
     \label{fig:sign}
 \end{figure}
 
-Figure \ref{fig:sign} shows how client - in possession of public/private key pair produces a signature which then is attached to the final MQTT CONNECT packet. First, it hashes the public key using Keccak-256 algorithm \cite{bertoni2009keccak} (commonly used in Ethereum, e.g. for block hashes), then it uses the private key to sign this hash and attaches obtained signature to the user properties part of the MQTT CONNECT message. Plain-text version of the public key is also attached in another field.
+Figure \ref{fig:sign} shows how client - in possession of public/private key pair produces a signature which then is attached to the final MQTT CONNECT packet. First, it hashes the public key using Keccak-256 algorithm \cite{bertoni2009keccak} (commonly used in Ethereum, e.g. for block hashes), then it uses the private key to sign this hash and attaches obtained signature to the user properties part of the MQTT CONNECT message. Plain-text version of the public key is also attached in another field. Ethereum signatures are created by signing arbirtary bytes through generated private key - which then can only be verified using the corresponding public key. It is also possible to extract signed bytes from the same signature in the process.
 
 \begin{figure}[h]
     \centering
@@ -112,7 +112,9 @@ Figure \ref{fig:sign} shows how client - in possession of public/private key pai
     \label{fig:verify}
 \end{figure}
 
-Then, as per figure \ref{fig:verify}, FlyTrap receives the CONNECT packet and extracts both the signature \& public key. As the corresponding private key for the public key was used to produce the signature, frameworks verifies this thanks to Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - and if so, then FlyTrap can hash the public key and compare the values. This gives definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
+Then, as per figure \ref{fig:verify}, FlyTrap receives the CONNECT packet and extracts both the signature \& public key from the message. As the corresponding private key for the public key was used to produce the signature, framework verifies this through Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - along with the signed value (in this case, hashed public key) by the client. Then, framework can verify whether both signature was indeed created with the private key corresponding to the attached public key and (by hashing it again) compare the extracted value with the attached public key. This gives a definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
+
+For Ethereum, both Verification Algorithm and Signing Algorithm is part of Elliptic Curve Digital Signature Algorithm \citep{johnson2001elliptic}, where public key has exactly 160 bits (which, coincidentally, is also used for ETH addresses). Hashing Algorithm - as mentioned above - is Keccak-256.
 \subsection{Protecting from brute-force attacks}
 Some of the failed attempts can result in persistent log to blockchain, which often implicates costs - especially if FlyTrap is operating on a public blockchain. This can open a door for malicious actors attempting to drain the framework from available funds by logging a lot of operations in a short span of time. Distributed Denial of Service (DDoS) attacks can also occur and overload the server, which - depending on hardware - could only handle a limited number of simultaneous connections.
 
