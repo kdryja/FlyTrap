@@ -107,7 +107,7 @@ Figure \ref{fig:sign} shows how client - in possession of public/private key pai
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{verify}
+     \makebox[\textwidth][c]{\includegraphics[width=1.1\textwidth]{verify}}
     \caption{FlyTrap verifying the signature}
     \label{fig:verify}
 \end{figure}
@@ -128,6 +128,19 @@ Similar to the section discussing encrypted connection, FlyTrap is capable of ei
 \section{Blockchain Layer}
 In this layer, communication with the Ethereum Node occurs. As described in architecture section, FlyTrap can either read or write new data onto the chain. FlyTrap should be allocated its own smart contract containing chain code capable of verifying connecting clients and relevant data structures. Once that's done, 
 \subsection{Data model}
+The root of all communication with blockchain is a smart contract that contains all chaincode responsible for retrieving and storing information required by FlyTrap. Each organisation or entity willing to use FlyTrap should configure and deploy a new contract, which would be tied to a singular owner (i.e., a private key). Ethereum's chaincode execution can be limited to only particular set of addresses, here 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{uml_topic}
+    \caption{Topic structure stored on Blockchain}
+    \label{fig:uml_topic}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{uml_event}
+    \caption{Event structure as stored in transaction log}
+    \label{fig:uml_event}
+\end{figure}
 \subsection{Report Generation}
 \subsection{Interacting with blockchain}
 \section{Presentation Layer}
