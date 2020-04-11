@@ -121,27 +121,67 @@ Some of the failed attempts can result in persistent log to blockchain, which of
 To combat those problems, framework will track any failed authentication attempts in an internal dictionary, mapping IP address to the number of failed attempts. This dictionary then will be consulted whenever a new connection is initiated. If it is, then the TCP link will be shut down and client informed that it is currently blacklisted. Though to give benefit of a doubt, there is a grace period of 2 prior failed attempts before a timed ban is applied. Whenever failed authentication occurs, the counter is increased by one - and if that count increases 3, the connection is terminated and dictionary updated with time 5 minutes in the future - that's the earliest time given IP can attempt connection again.
 \section{Broker Layer}
 
-This layer is where the communication with the actual MQTT Broker occurs. Normally, it would be desirable to place both FlyTrap and the broker (e.g. Mosquitto) on the same machine or at least network to minimise the latency - though it's not necessary. Depending on the outcome of the authorisation from the Client Layer, every packet from the client is forwarded to the broker and every packet from the broker sent back to the client. Since each connection is an individual thread, it also maintains information such as originating (\& destination) address and port - and this information will persist as long as the original connection Client <> FlyTrap remains open - which will only be terminated if client times out, requests disconnection or for any reason authentication to FlyTrap fails.
+This layer is where the communication with the actual MQTT Broker occurs. Normally, it would be desirable to place both FlyTrap and the broker (e.g. Mosquitto) on the same machine (or at least the same network) to minimise the latency - though it's not necessary. Depending on the outcome of the authorisation from the Client Layer, every packet from the client is forwarded to the broker and every packet from the broker sent back to the client. Since each connection is an individual thread, it also maintains information such as originating (\& destination) address and port - and this information will persist as long as the original connection Client <=> FlyTrap remains open - which will only be terminated if client times out, requests disconnection or for any reason authentication to FlyTrap fails.
 
-Similar to the section discussing encrypted connection, FlyTrap is capable of either connecting with TLS-capable brokers or via plain TCP if desired (though keeping the security implication in mind, as everyone intercepting the connection would be able to read the payload).
+Similar to the section discussing encrypted connection, FlyTrap is capable of either connecting with TLS-capable brokers or via plain TCP if desired (though keeping the security implications in mind, as everyone intercepting the connection would be able to read the payload).
 
 \section{Blockchain Layer}
-In this layer, communication with the Ethereum Node occurs. As described in architecture section, FlyTrap can either read or write new data onto the chain. FlyTrap should be allocated its own smart contract containing chain code capable of verifying connecting clients and relevant data structures. Once that's done, 
+In this layer, communication with the Ethereum node occurs. As described in architecture section, FlyTrap can either read or write new data onto the chain. FlyTrap should be allocated its own smart contract containing chain code capable of verifying connecting clients and relevant data structures. 
 \subsection{Data model}
-The root of all communication with blockchain is a smart contract that contains all chaincode responsible for retrieving and storing information required by FlyTrap. Each organisation or entity willing to use FlyTrap should configure and deploy a new contract, which would be tied to a singular owner (i.e., a private key). Ethereum's chaincode execution can be limited to only particular set of addresses, here 
+The root of all communication with blockchain is a smart contract that contains all chaincode responsible for retrieving and storing information required by FlyTrap. Each organisation or entity willing to use FlyTrap should configure and deploy a new contract, which would be tied to a singular owner (i.e., a private key). Ethereum's chaincode execution can be limited to only particular set of addresses, here most of the sensitive operations (such as addining new publishers or subscribers) are restricted to either an owner or payable ETH (set by the owner) - if the requestor is not an owner.
+
+Then, each contract contains a singular variable called ``topics'' which is a mapping (dictionary structure in Solidity, programming language for ETH) from string (name of the topic) to structure ``Topic'' where the metadata can be located, such as control lists. Every person can create their own topic on the contract, of which they would become the owner - this operation can be payable, if set so by the contract's owner, meaning topic creators would need to pay a fee. Figure \ref{fig:uml_topic} shows all fields used in FlyTrap's chaincode placed on blockchain, to further explain usage and purpose of each of the fields:
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{uml_topic}
     \caption{Topic structure stored on Blockchain}
     \label{fig:uml_topic}
 \end{figure}
+\begin{description}
+    \item[isValue] - in Solidity, it is not possible to determine whether given key exists in the mapping, as every value points to some arbitrary address space. An extra field helps to mitigate this issue, e.g. to avoid overwriting existing topics with new data.
+    \item[sensitive] - a bool flag marking given topic as sensitive which enhances it with extra data reporting functionality outlined in section \ref{sec:reports}.
+    \item[name] - a string storing topic's name, as used by the clients on the broker. It's also used as the key in the topics mapping.
+    \item[addPubCost] - integer, allowing to set a price on adding new publishers to given topic. Then, the payment will be transferred to topic's owner.
+    \item[addSubCost] - integer, similar as above, but for publishing.
+    \item[owner] - ETH public address of the person that created this topic.
+    \item[country] - 2-letter encoding of country to which access should be limited to for all subscribers/publishers.
+    \item[publishers] - mapping from address of a person to a true/false bool value to determine whether given public key can publish to this topic. It's a way of creating dynamic lists in Solidity, while maintaining $O(1)$ lookup time.
+    \item[subscribers] - same as above, but for subscribers.
+\end{description}
+
+Apart from base structure holding information inside the contract, events are also utilised. Event is a special structure used in Solidity, which attaches itself to the transaction log. Meaning that it is possible to append information such as user-specified reason or timestamps to all operations. This is then encoded in Application Binary Interface (ABI)\footnote{Encoding type used in Solidity: https://solidity.readthedocs.io/en/latest/abi-spec.html} JSON and sent along with the transaction. Though, it is also possible to emit empty events solely for the logging purposes \citep{dannen2017introducing}.  Figure \ref{fig:uml_event} outlines what each event consists of:
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{uml_event}
+    \includegraphics[width=0.8\textwidth]{uml_event}
     \caption{Event structure as stored in transaction log}
     \label{fig:uml_event}
 \end{figure}
-\subsection{Report Generation}
+
+\begin{description}
+    \item[source] - ETH address of the entity that caused the log to emit. E.g. for adding new topics or modifying topic's properties (such as subscribers) it's the initiators request. For system-caused logs (e.g. report summaries), it'd be contract's address.
+    \item[target] - ETH address of the entity affected by the logged action. E.g. for revoking publishers/subscribers, it'd be the person that's getting removed.
+    \item[action] - enumeration which defines the exact reason for the emitting the log, this can be one of the following values:
+    \begin{description}
+        \item[AddTopic] - when a new topic is created on the contract
+        \item[AddPub] - when a new person is added as a publisher to the topic
+        \item[AddSub] - when a new person is added as a subscriber to the topic
+        \item[RevokePub] - when a person is removed from authorised publishers in the topic
+        \item[RevokeSub] - when a person is removed from authorised subscribers in the topic
+        \item[WrongCountry] - when a connection was attempted from an IP located in country that's not permitted
+        \item[Banned] - when a person failed to authorise when connecting for three times in a row and was placed on a blacklist
+        \item[Summary] - system generated log for sensitive topics (see \ref{sec:reports}
+    \end{description}
+    \item[name] - string used to signify which topic was affected. If action doesn't involve a topic, it contains offending IP address.
+    \item[reason] - string provided either by the user or by the system to provide further context on the action (in particular, to answer questions given by GDPR, ``why was access provisioned?'')
+    \item[timestamp] - UNIX timestamp (expressed as integer) to determine when the transaction has happened
+\end{description}
+\subsection{Report Generation} \label{sec:reports}
+For the most sensitive topics, it is possible to enhance the security with extra measures and reporting. For every topic marked as sensitive, FlyTrap would maintain an in-memory list of all publishers or subscribers that have recently accessed the topic. Then, every specified period of time, a log will be generated and placed on blockchain that would outline all Ethereum public keys that have either published or subscribed to the given topic.
+
+To put it in an example: if the reporting frequency is set at 30minutes and the system is started at 12:00, then client A publishes to topic  X at 12:05 and client B publishes to topic X at 12:15, finally at 12:30 a report would be generated and placed on blockchain which would signify that both client A \& client B published to topic X between 12:00 and 12:30. The reports should be read as follows: In the past X minutes, following public keys accessed following sensitive topics. 
+
+It is important to consider the implications of more and less frequent reporting - since every transaction placed on a blockchain with PoW consensus algorithm has embedded gas price\footnote{Gas is a unit of work performed on Ethereum. The more complex the operation, the more gas is required and thus more ETH currency is needed}, so the owner of the system would need to either accept the increased costs or decrease the reporting frequency. Of course, for PoA algorithms, there is not gas cost, but still chaincode's size would grow faster in case of more frequent reportings. But with decreased frequency, the precision also falls, so if our reporting is set to 24hrs, now we can only determine the access history in daily windows (rather than 30min ones, as shown in the example above).
+
 \subsection{Interacting with blockchain}
 \section{Presentation Layer}
 \subsection{Website}
