@@ -1,26 +1,11 @@
 \documentclass[msci]{abdnthesis}
 
-%% For citations, I would recommend natbib for its                          
-%% flexibility, particularly when named citation styles are used, but                
-%% it also has useful features for plain and those of that ilk.                      
-%% The natbib package gives you the following definitons                             
-%% that extend the simple \cite:                                                     
-%   \citet{key} ==>>                Jones et al. (1990)                              
-%   \citet*{key} ==>>               Jones, Baker, and Smith (1990)                   
-%   \citep{key} ==>>                (Jones et al., 1990)                             
-%   \citep*{key} ==>>               (Jones, Baker, and Smith, 1990)                  
-%   \citep[chap. 2]{key} ==>>       (Jones et al., 1990, chap. 2)                    
-%   \citep[e.g.][]{key} ==>>        (e.g. Jones et al., 1990)                        
-%   \citep[e.g.][p. 32]{key} ==>>   (e.g. Jones et al., p. 32)                       
-%   \citeauthor{key} ==>>           Jones et al.                                     
-%   \citeauthor*{key} ==>>          Jones, Baker, and Smith                          
-%   \citeyear{key} ==>>             1990                                             
-
 \usepackage[numbers]{natbib}
 \usepackage[utf8]{inputenc}
 \usepackage{subfig}
 \usepackage{glossaries}
 \usepackage{csquotes}
+\usepackage{hyperref}
 \setlength{\bibsep}{0pt}
 \bibliographystyle{apalike}
 \graphicspath{ {./img/} }
@@ -33,11 +18,6 @@
 
 \title{FlyTrap: Decentralised Blockchain Security \& Auditing Architecture for IoT and MQTT Brokers}
 \author{Konrad M. Dryja}
-% IMO this is a bit silly, but some like to include these. To remove,
-% delete this declaration and remove the option from the
-% \documentclass definition above.
-%\qualifications{PhD, Computer Science, University College London, 1997\\%            
-%BEng (Hons.) Electrical and Electronic Engineering, The University of Wales, Swansea, 1992}
 \school{Department of Computing Science}
 
 %%%% In the final submission of a thesis, this should only be the year
