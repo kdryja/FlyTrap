@@ -188,7 +188,12 @@ To avoid memory filling too quickly (and eventually reaching the capabilities of
 
 \subsection{Interacting with blockchain}\label{sec:interact}
 As FlyTrap aims to be deployed on a publicly available blockchain, anyone can interact with the data (as long as they pay the requested fee or identify with the relevant owner's private key). For administrative operations, a simple CLI is also included, which can be called directly (not necessarily through FlyTrap) to perform administrative tasks, such as adding new topics or modifying topics restrictions.
+
 \section{Presentation Layer}
 This layer combines everything above in a front-end allowing users to inspect and interact with stored information. Similarly to section \ref{sec:interact}, this could also be read through any of the publicly available front-ends used to interact with Ethereum transactions, but to provide a complete package, the project will also ship with a simple website aiming to satisfy requirements stated in chapter 3.
 \subsection{Website}
 The website will not allow for writing data to blockchain (thus, does not require Ethereum wallet) which implies that all reading operations are free. Instead of using the Blockchain CLI from Blockchain Layer, the website will ship with API of its own, which will perform calls against the specific Ethereum node directly.
+
+Due to how blockchain is designed, it is not possible to lookup a transaction from specific time. Since it follows design of a linked-list, lookup of all elements is required to find requested date, thus resulting in the worst case complexity of $O(n)$, where $n$ is the amount of transactions in the smart contract. This might severely impact performance, especially as the chain grows, thus the web app will keep track of transaction hashes in 5-day intervals in-memory, updating as further requests are performed.
+
+Front-ends operations is also restricted by a time-constraint, i.e. it would be possible to request reports generated between 1970-01-01 and 1970-01-02, warning the user that less restrictive constraints might result in longer lookup times.

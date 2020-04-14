@@ -32,29 +32,46 @@ In this subsection I will describe the technologies used in this project, that i
 
 Following programming languages have been used when working on this project:
 \begin{itemize}
- \item \textbf{Golang} - main driver behind the proxy, MQTT client and for communicating with the blockchain. It has also be used to write a simple backend for the web application.
- \item \textbf{Solidity} - language used to develop smart contracts on Ethereum.
- \item \textbf{HTML5 + CSS3 + JavaScript} - frontend stack used to create a website to display contents of blockchain.
- \item \textbf{Bash} - to design and execute tests capturing the latency of requests
+ \item \textbf{Golang} (v1.14) - main driver behind the proxy, MQTT client and for communicating with the blockchain. It has also be used to write a simple backend for the web application.
+ \item \textbf{Solidity} (v0.6.6) - language used to develop smart contracts on Ethereum.
+ \item \textbf{HTML5 + CSS3 + JavaScript} - frontend stack used to create a simple website to display contents of blockchain.
+ \item \textbf{Bash} (bash-5.0) - to design and execute tests capturing the latency of requests
 \end{itemize}
 
 \subsubsection{Golang}
-Golang 
+Go (short for Golang) has been introduced for the first time in 2009 by Google \cite{team2009go}. It is a language which strongly follows parallel programming paradigms, allowing the developer to make use out of all available threads and cores to maximise the performance. Multi-thread performance was exceptioanlly sought for in this project, as FlyTrap is expected to handle many simultanous proxy connections. In Golang, programmer can make use of so-called goroutines, which the runtime can dynamically either place on separate cores or run them concurrently on the same core - depending on the task.
+
+All Ethereum frameworks (such as go-ethereum or geth, explained further in section \ref{sec:tpp} were also designed first in Golang. By making a decision to write my project in Go as well, I ensured maximum compatibility, as I was able to use official SDK's, rather than having to rely on unofficial solutions. I also was already experienced with Golang, as I spent year in industry at Google working on several projects in that language, which decreased the learning overhead for my dissertation.
+
+Go in the project was used to write backend of the web server, CLI to communicate with the blockchain and the proxy itself which handles all incoming connections.
 \subsubsection{Solidity}
+Solidity \cite{dannen2017introducing} is the language used to write smart-contracts in Ethereum, so unfortunately it was a necessity. Its syntax is similar to Javascript, though it is statically, strongly typed. go-ethereum includes a utility which translates Solidity code into Golang methods, which then can be used to make calls against blockchain. There is no API which can be used to query / create transactions and rather developers need to use official SDKs published by Ethereum team.
 \subsubsection{HTLM5 + CSS3 + JavaScript}
+Since the web application serves only as a presentation and demonstration, I decided against any complex JavaScript or TypeScript frameworks and rather opted for a simple solution consisting of plain HTML + CSS and JavaScript. The web app also includes a small backend, thus asynchronous calls are performed from the client side towards the server to dynamically fill the content tables.
 \subsubsection{Bash}
 
 \subsubsection{Considered alternatives}
 
-\subsection{Third party libraries \& resources}
+\subsection{Third party libraries \& resources}\label{sec:tpp}
+Following resources - which I was not the author of - were included in the project. All of them includ open-source license, allowing free use:
+\begin{description}
+    \item[go-ethereum v1.9.10] \cite{ethereum2017official} - 
+    \item[paho.golang v0.9.1] \cite{pahogolang} -
+    \item[tabulator v4.4.3] \cite{tabulator} -
+\end{description}
 
 \subsection{Working with Blockchain}
+Ethereum was to be used as a data layer for the application. Of course, testing on the public chain was out of the question, due to the tremendous costs involved. Fortunately, Ethereum provides an easy way to start your own network, which would behave identically as the real one (including fake credits to use) - in the end, it would be indistinguishable from the real node for the applications attempting communication. When working on the project, I considered three ways of mocking the blockchain and in the end made sure to test FlyTrap in all three approaches:
+\subsubsection{Ganache}
+Ganache \cite{lee2019testing}
+\subsubsection{Geth}
 
 \subsection{Development tools}
 \subsubsection{Version Control}
 \subsubsection{Text Editor}
 
 \subsection{Configuration}
+Application involves a lot of configurables, to ensure that the end-user finds their preferred combination of settings. There are several ways 
 
 \subsection{Logging}
-
+All major operations on FlyTrap, Blockchain CLI and Web Backend are logged to standard error through 
