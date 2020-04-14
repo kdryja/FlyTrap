@@ -91,7 +91,7 @@ It is vital to point out, that due to step 3 requiring server's certificate, Fly
 
 For every new connection, a new thread (or, goroutine) is spawned which has its own context and is separated from others.
 
-\subsection{ authenticity of public keys}
+\subsection{Authenticity of public keys}
 Public Keys from the Ethereum wallet are used as an identifier when determining whether a client can access a given resource or not. Though it only handles a part of the problem. Public Keys, by definition, are public, meaning that anyone could impersonate legitimate holders of the public/private key. This calls for an approach similar to the Certificate Authority problem when attempting encrypted HTTPS connections. Unfortunately, FlyTrap cannot expect every IoT device to have its own set of certificates, which would then need to be trusted by the framework in order to become recognisable - as those devices are often of limited storage and power.
 
 In order to solve the problem of establishing whether the person presenting a public key also holds a corresponding key, signatures are used. Below you can see two figures, each outlining client-side and FlyTrap side of the signing/verification process.
