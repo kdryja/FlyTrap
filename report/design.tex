@@ -175,13 +175,20 @@ Apart from base structure holding information inside the contract, events are al
     \item[reason] - string provided either by the user or by the system to provide further context on the action (in particular, to answer questions given by GDPR, ``why was access provisioned?'')
     \item[timestamp] - UNIX timestamp (expressed as integer) to determine when the transaction has happened
 \end{description}
-\subsection{Report Generation} \label{sec:reports}
+\subsection{Report Generation}\label{sec:reports}
 For the most sensitive topics, it is possible to enhance the security with extra measures and reporting. For every topic marked as sensitive, FlyTrap would maintain an in-memory list of all publishers or subscribers that have recently accessed the topic. Then, every specified period of time, a log will be generated and placed on blockchain that would outline all Ethereum public keys that have either published or subscribed to the given topic.
 
 To put it in an example: if the reporting frequency is set at 30minutes and the system is started at 12:00, then client A publishes to topic  X at 12:05 and client B publishes to topic X at 12:15, finally at 12:30 a report would be generated and placed on blockchain which would signify that both client A \& client B published to topic X between 12:00 and 12:30. The reports should be read as follows: In the past X minutes, following public keys accessed following sensitive topics. 
 
 It is important to consider the implications of more and less frequent reporting - since every transaction placed on a blockchain with PoW consensus algorithm has embedded gas price\footnote{Gas is a unit of work performed on Ethereum. The more complex the operation, the more gas is required and thus more ETH currency is needed}, so the owner of the system would need to either accept the increased costs or decrease the reporting frequency. Of course, for PoA algorithms, there is not gas cost, but still chaincode's size would grow faster in case of more frequent reportings. But with decreased frequency, the precision also falls, so if our reporting is set to 24hrs, now we can only determine the access history in daily windows (rather than 30min ones, as shown in the example above).
+\subsection{Caching operations}
+Communicating with Blockchain is a computationally expensive operation and it is vital to ensure that it happens as rarely as possible in order to limit the latency caused by the security checks. Following brute force approach, framework would issue a new request every time a connection starts - regardless whether it is part of a series of requests arriving in bulk. FlyTrap is using Ethereum as a de facto database layer, but at the same time aiming to cache the operations in-memory, which can be then quickly accessed if repeated requests occur. For checking the permissions, whenever a new request is issued, the result is stored in a map with mutex lock (to avoid race conditions).
 
-\subsection{Interacting with blockchain}
+To avoid memory filling too quickly (and eventually reaching the capabilities of the server that is running the software), the mapping used for caching will be erased every 24hrs or when the process is terminated/restarted - whichever happens first.
+
+\subsection{Interacting with blockchain}\label{sec:interact}
+As FlyTrap aims to be deployed on a publicly available blockchain, anyone can interact with the data (as long as they pay the requested fee and/or identify with the relevant owner's private key). For administrative operations, a simple CLI is also included, which can be called directly (not necessarily through FlyTrap) to perform administrative tasks, such as adding new topics, modifying topics restrictions etc. 
 \section{Presentation Layer}
+This layer combines everything above in a front-end allowing users to inspect and interact with stored information. Similarly to section \ref{sec:interact}, this could also be read through any of the publicly available frontends used to interact with Ethereum transactions, but to provide a complete package, the project will also ship with a simple website aiming to satisfy requirements stated in chapter 3.
 \subsection{Website}
+The website will not allow for writing data to blockchain (thus, doesn't require Ethereum wallet) which implies that all reading operations are free. Instead of using the Blockchain CLI from Blockchain Layer, the website will ship with API of its own, which will perform calls against the specific Ethereum node directly.
