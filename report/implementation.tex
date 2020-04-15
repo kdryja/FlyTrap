@@ -67,6 +67,8 @@ Following resources - which I was not the author of - were utilised in the proje
 Ethereum was to be used as a data layer for the application. Of course, testing on the public chain was out of the question, due to the tremendous costs involved. Fortunately, Ethereum provides an easy way to start your own network, which would behave identically as the real one (including fake credits to use) - in the end, it would be indistinguishable from the real node for the applications attempting communication. When working on the project, I considered three ways of mocking the blockchain and in the end made sure to test FlyTrap in all three approaches:
 \subsubsection{Ganache}
 Ganache\cite{lee2019testing} is a framework designated for emulating Ethereum environment. It can be thought as a sandbox environment, where you can generate any required number of dummy accounts, preloaded with currency, which then can be used to transact with each other - all running on localhost, without the need of configuring a proper blockchain network. Extra blocks are mined automatically - as needed. It is also possible to dump the workspace into a file and check into version control.
+
+Figure \ref{fig:ganache} shows how the interface looks like. You can generate as many wallets as possible, each with public/private key pair and preloaded with 100 ETH.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{ganache}
@@ -75,12 +77,14 @@ Ganache\cite{lee2019testing} is a framework designated for emulating Ethereum en
 \end{figure}
 
 \subsubsection{Geth}
+Geth is an environment much closer to the real Ethereum node. In fact, it is a real Ethereum node. Geth is also used in production environments to set up new networks or nodes. When testing my framework, I have set up a new Proof-of-Authority network, with only one node. Since I am in control of the network, I can configure all parameters, such as cost of gas (decreasing it down to 0), allowed accounts or speed of mining new blocks. This network is also indistinguishable from a public one, similar to Ganache.
 \subsection{Development tools}
+\hl{optional, get back here if i still have some wordcount left}
 \subsubsection{Version Control}
 \subsubsection{Text Editor}
 
 \subsection{Configuration}
-Application involves a lot of configurable values, to ensure that the end-user finds their preferred combination of settings. There are several ways to state constants and parameteres when running any of the components 
+Application involves a lot of configurable values, to ensure that the end-user finds their preferred combination of settings. There are several ways to state constants and parameters when running any of the components 
 
 \subsection{Logging}
 All major operations on FlyTrap, Blockchain CLI and Web Backend are logged to standard error through log Golang package. These logs are only produced only 
