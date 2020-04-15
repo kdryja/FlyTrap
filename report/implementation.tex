@@ -84,8 +84,16 @@ Geth is an environment much closer to the real Ethereum node. In fact, it is a r
 \subsubsection{Text Editor}
 
 \subsection{Configuration}
-Application involves a lot of configurable values, to ensure that the end-user finds their preferred combination of settings. There are several ways to state constants and parameters when running any of the components 
-
+Application involves a lot of configurable values, to ensure that the end-user finds their preferred combination of settings (such as TLS certs, ports - see User Manual for overview of all possibilities). There are several ways to state constants and parameters when running any of the components:
+\begin{itemize}
+    \item Command line parameters - to specify environment when running the binaries.
+    \item Environmental Variables - alternative to command line parameters. FlyTrap will first inspect command line parameters and if not, will look for environmental variables defined by the host OS.
+    \item Constants in the code - for some immutable values, that do not require intervention (though the option to change them still remains documented).
+    \item Website requests - for the web application that ships alongside the project, user can also specify fields such as contract address or on which port Ethereum node is running under.
+    \item Static files at projects root - since FlyTrap requires some user-provided files (such as private keys or certificates), running the proxy will require providing path to those files via one of the methods specified above.
+\end{itemize}
 \subsection{Logging}
-All major operations on FlyTrap, Blockchain CLI and Web Backend are logged to standard error through log Golang package. These logs are only produced only 
+All major operations on FlyTrap, Blockchain CLI and Web Backend are logged to standard error through log Golang module\footnote{https://golang.org/pkg/log/}. These logs are only produced only for major operations such as new connection or any actions resulting in writing to the blockchain.
+
+They are not persistent and will disappear upon restart. Users are free to implement their own redirection to local files if desired.
 
