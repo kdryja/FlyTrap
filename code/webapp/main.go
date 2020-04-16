@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/kdryja/thesis/code/blockchain"
+)
+
+const (
+	PORT = ":8081"
 )
 
 var (
@@ -25,7 +30,9 @@ func main() {
 	http.HandleFunc("/detailed", DetailedHandler)
 	http.HandleFunc("/logs", LogsHandler)
 	http.HandleFunc("/", MainHandler)
-	http.ListenAndServe(":8081", nil)
+
+	log.Println("Server is now running under " + PORT)
+	http.ListenAndServe(PORT, nil)
 }
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {

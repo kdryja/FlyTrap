@@ -16,7 +16,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/eclipse/paho.golang/paho"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -36,6 +35,8 @@ var (
 	cID          = flag.String("id", "", "ID of connecting client")
 	privLocation = flag.String("priv", "privkey1.asc", "Location of your private key file")
 	forceSign    = flag.Bool("f", false, "Whether to force recomputation of signature")
+	serverCrt    = flag.String("crt", "flytrap.crt", "location of cert for SSL/TLS connection")
+	connTest     = flag.Bool("conn_test", false, "whether to only connect and then immediately disconne")
 )
 
 func con(ip string) net.Conn {
@@ -47,7 +48,7 @@ func con(ip string) net.Conn {
 		return con
 	}
 	c := x509.NewCertPool()
-	pem, err := ioutil.ReadFile("server.crt")
+	pem, err := ioutil.ReadFile(*serverCrt)
 	if err != nil {
 		panic(err)
 	}
@@ -120,7 +121,7 @@ func subscribe(wg *sync.WaitGroup, ctx context.Context) {
 	}
 	defer c.Disconnect(&paho.Disconnect{})
 	subPaho := paho.Subscribe{Subscriptions: map[string]paho.SubscribeOptions{
-		*topic: paho.SubscribeOptions{QoS: 0},
+		*topic: {QoS: 0},
 	}}
 	_, err = c.Subscribe(ctx, &subPaho)
 	if err != nil {
@@ -166,7 +167,6 @@ func publish(wg *sync.WaitGroup, ctx context.Context) {
 		if err != nil {
 			panic(err)
 		}
-		time.Sleep(time.Second)
 	}
 	log.Printf("Published %d messages, as requested, disconnecting", *pub)
 }
@@ -180,6 +180,27 @@ func main() {
 		token := make([]byte, 4)
 		rand.Read(token)
 		*cID = hex.EncodeToString(token)
+	}
+
+	if *connTest {
+		c := paho.NewClient(paho.ClientConfig{Conn: con(*connIP)})
+		sig, pubKey, err := signKey()
+		if err != nil {
+			log.Printf("Token request failed with: %s. Continuing MQTT request without token.", err)
+		}
+		_, err = c.Connect(ctx, &paho.Connect{
+			ClientID:  *cID + "_CON",
+			KeepAlive: 10,
+			Properties: &paho.ConnectProperties{
+				User: map[string]string{
+					"flytrap_sig": sig,
+					"flytrap_pub": pubKey,
+				}},
+		})
+		if err != nil {
+			panic(err)
+		}
+		return
 	}
 
 	if *pub > 0 {
