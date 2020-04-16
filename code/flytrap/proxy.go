@@ -219,7 +219,7 @@ func (p *Proxy) proxyPass(ctx context.Context, lc, rc net.Conn) error {
 }
 
 // New creates a new instance of Proxy, which is either TLS encrypted or not.
-func New(dst string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
+func New(dst, crt string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
 	p := &Proxy{dst: dst, lc: c, Cache: ca}
 	var err error
 
@@ -234,7 +234,7 @@ func New(dst string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
 
 	// If requested TLS server, generate TLS connections
 	if s {
-		rootCA, err := ioutil.ReadFile("mosquitto.org.crt")
+		rootCA, err := ioutil.ReadFile(crt)
 		if err != nil {
 			return nil, err
 		}
