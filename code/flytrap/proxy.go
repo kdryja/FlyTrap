@@ -240,7 +240,7 @@ func New(dst, crt string, c net.Conn, s bool, ca *Cache) (*Proxy, error) {
 		}
 		crt := x509.NewCertPool()
 		crt.AppendCertsFromPEM(rootCA)
-		p.rc, err = tls.Dial("tcp", dst, &tls.Config{RootCAs: crt})
+		p.rc, err = tls.Dial("tcp", dst, &tls.Config{RootCAs: crt, InsecureSkipVerify: true})
 		if err != nil {
 			return nil, err
 		}
