@@ -12,8 +12,8 @@ import (
 
 var (
 	keystoreFile = flag.String("key", "", "location of your UTC file")
-	public       = flag.Bool("pub", false, "whether to output public key")
-	private      = flag.Bool("priv", false, "whether to output private key")
+	public       = flag.Bool("pub", true, "whether to output public key")
+	private      = flag.Bool("priv", true, "whether to output private key")
 	password     = flag.String("pass", "password", "password to unlock your keystore")
 )
 
