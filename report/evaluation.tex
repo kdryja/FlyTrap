@@ -2,17 +2,39 @@
 FlyTrap imposes an overhead to vanilla MQTT brokers. It is vital to ensure that added layer of security does not severely impact operation of the broker, as MQTT is a time-sensitive protocol, requiring frequent and rapid responses. In this chapter, I will design experiments to measure latency caused by FlyTrap, operation cost on public blockchain and reflect back to requirements (\& user stories) to ensure that FlyTrap fulfills all of the specified needs
 
 \section{Experimental design}
+This section will include details on how the experiments were designed, what were the main motivations behind each of them along with the description of hardware \& software used, to ensure easy reproducibility.
 \subsection{Research question}
 I will be looking at evaluation three separate aspects of the implementation and thus can form three research questions, which each of the subsequent sections will attempt to answer:
 \begin{enumerate}
-  \item  
+  \item How significant is the performance hit by proxing the connection through FlyTrap, as opposed to directly connecting to the broker?
+  \item How exensive would be operation of FlyTrap on Proof-of-Stake type of blockchain network?
+  \item Does the software fulfil specified requirements?
 \end{enumerate}
 \subsection{Experiments}
+Each of the questions specified above will have its own designated test. To test the performance hit, 
 \subsection{Testing environment}
+Tests were performed on the University-provided hardware, with the specs as below:
 \subsubsection{Hardware}
-For tests, virtual machine provided by the University has been used. To ensure that potential noise has been taken into account,  
+For tests, virtual machine provided by the University has been used. Throughout the test, the current activity on the machine will be monitored through `top' utility to ensure that no other program might influence the response times. Additionally, to avoid potential slowdowns with caching, each test will have 5 warm-up requests, which will be discarded from the evaluation, followed by 100 experimental measurements.
+
+Table \ref{tab:hw} shows full specification of the hardware used for running the tests:
+\begin{table}[]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Component} & \textbf{Value}                   \\ \hline
+OS                 & Ubuntu 16.04.6 LTS               \\ \hline
+Kernel             & 4.4.0-166                        \\ \hline
+CPU                & Intel Xeon CPU E5-2630 @ 2.30GHz \\ \hline
+Cores              & 4                                \\ \hline
+L3 Cache           & 15 MB                            \\ \hline
+RAM                & 70 GB                            \\ \hline
+\end{tabular}
+\caption{Specification of the testing environment}
+\label{tab:hw}
+\end{table}
 \subsubsection{Software}
-As network latency can be unpredictable and varied, all required software and frameworks have been locally installed in the machine, with FlyTrap communicating via local TCP ports. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. Below you can find a list of specific software used for tests:
+As network latency can be unpredictable and varied, all required software and frameworks have been locally installed in the machine, with FlyTrap communicating via local TCP ports. This also includes local instances for both MQTT broker and Ethereum node. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. Below you can find a list of specific software used for tests:
 
 \begin{table}[]
 \centering
@@ -25,7 +47,7 @@ MQTT Broker       & Local instance of Mosquitto 1.6.9                           
 \end{tabular}
 \end{table}
 
-All source code from the project was compiled into binaries before execution.
+All source code from the project was compiled into binaries before execution to further reduce potential noise.
 
 \section{Latency Evaluation}
 \subsection{Plain TCP}
@@ -78,9 +100,9 @@ PUBLISH: Vanilla vs FlyTrap   & 5.67E-79         \\ \hline
 % \subsubsection{PUBLISH}
 
 \section{Cost Evaluation}
-As mentioned, Proof-of-Authority networks do not have any currency involved and thus there is no reward for mining. But this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments.
+As mentioned, Proof-of-Authority networks do not have any currency involved and thus there is no reward for mining. But this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments and it's important to keep this cost to the minimum.
 
-Six operations performed by FlyTrap were executed a hundred times to extract the average cost in gas. To put those numbers into a perspective, I have also included the equivalent value in USD - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}
+Six operations performed by FlyTrap were executed a hundred times to extract the average costs in gas. To put those numbers into a perspective, I have also included the equivalent value in USD - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}
 
 \begin{figure}[h]
     \centering
@@ -142,9 +164,9 @@ This scenario requires us to determine who access the requested resource on the 
     \caption{Sensitive topics report}
     \label{fig:scenario2}
 \end{figure}
-Figure \ref{fig:scenario2} shows how the website would look like upon inspecting the access summaries. We can see that on April 18th in the evening, topic `MyTopic1' was accessed by a single person with the shown public key. Now, we are able to trace the leakage down to a single person and verify whether their credentials were compromised to further assess the damags.
+Figure \ref{fig:scenario2} shows how the website would look like upon inspecting the access summaries. We can see that on April 18th in the evening, topic `MyTopic1' was accessed by a single person with the shown public key. Now, we are able to trace the leakage down to a single person and verify whether their credentials were compromised to further assess the damages.
 \subsection{Scenario \#3}
-Here we are just looking at verifying who can access particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect "Topic/Person" part of the webapp, which would allow us to see a list of public keys that can access given topic, as per figure \ref{fig:}
+Here we are just looking at verifying who can access particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect "Topic/Person" part of the webapp, which would allow us to see a list of public keys that can access given topic, as per figure \ref{fig:scenario3}
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{scenario3}

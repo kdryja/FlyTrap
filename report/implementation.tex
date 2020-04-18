@@ -35,7 +35,6 @@ Following programming languages have been used when working on this project:
  \item \textbf{Golang} (v1.14) - main driver behind the proxy, MQTT client and for communicating with the blockchain. It has also be used in the backend for the web application.
  \item \textbf{Solidity} (v0.6.6) - language used to develop smart contracts on Ethereum.
  \item \textbf{HTML5 + CSS3 + JavaScript} - frontend stack used to create a simple website to display contents of blockchain.
- \item \textbf{Bash} (bash-5.0) - to design and execute tests capturing the latency of requests.
 \end{itemize}
 
 \subsubsection{Golang}
@@ -48,8 +47,6 @@ Go in the project was used to write backend of the web server, CLI to communicat
 Solidity \cite{dannen2017introducing} is the language used to write smart-contracts in Ethereum, so unfortunately it was a necessity. Its syntax is similar to Javascript, though it is statically, strongly typed. go-ethereum includes a utility which translates Solidity code into Golang methods, which then can be used to make calls against blockchain. There is no API which can be used to query / create transactions and rather developers need to use official SDKs published by Ethereum team.
 \subsubsection{HTLM5 + CSS3 + JavaScript}
 Since the web application serves only as a presentation and demonstration, I decided against any complex JavaScript or TypeScript frameworks and rather opted for a simple solution consisting of plain HTML + CSS and JavaScript. The web app also includes a small backend, thus asynchronous calls are performed from the client side towards the server to dynamically fill the content tables.
-\subsubsection{Bash}
-\hl{explain more after finished with evaluation}
 \subsubsection{Considered alternatives}
 Apart from Golang, I was also considering \textbf{Python} as a main driver for the project. Majority of my projects in the past included Python and my familiarity was sufficient to avoid any roadblocks. Though, compare to Golang, there are several problems, which would be especially prominent in this project. First of them being Global Interpreter Lock\cite{beazley2010understanding} (or GIL for short), which effectively restricts the scope of possible multithreading.
 
