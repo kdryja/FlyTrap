@@ -24,6 +24,9 @@ var (
 	logsRead    = flag.Bool("logs", false, "Receive relevant event logs. Providing -client and -topic flags will restrict the search only to relevant fields.")
 	timestamp   = flag.String("date", "", "Provide date that should be searched for. E.g. 2020-02-29")
 	verbose     = flag.Bool("v", false, "Enable verbose mode")
+	country     = flag.String("country", "GB", "topic will only be accessible to people connecting from this country. 2 letter ISO code.")
+	pubCost     = flag.Int64("pub_cost", 0, "cost of adding as publisher in wei")
+	subCost     = flag.Int64("pub_cost", 0, "cost of adding as subscriber in wei")
 )
 
 func main() {
@@ -47,7 +50,8 @@ func main() {
 	}
 	if *newTopic != "" {
 		b.Opts.Value = big.NewInt(1000)
-		if _, err := b.Instance.AddTopic(b.Opts, *topicName, [2]byte{'G', 'B'}, big.NewInt(0), big.NewInt(0), *newTopic, true); err != nil {
+		c := *country
+		if _, err := b.Instance.AddTopic(b.Opts, *topicName, [2]byte{c[0], c[1]}, big.NewInt(*pubCost), big.NewInt(*subCost), *newTopic, true); err != nil {
 			log.Fatal(err)
 		}
 	}
