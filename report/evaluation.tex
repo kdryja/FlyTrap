@@ -3,15 +3,19 @@ FlyTrap imposes an overhead to vanilla MQTT brokers. It is vital to ensure that 
 
 \section{Experimental design}
 This section will include details on how the experiments were designed, what were the main motivations behind each of them along with the description of hardware \& software used, to ensure easy reproducibility.
-\subsection{Research question}
-I will be looking at evaluation three separate aspects of the implementation and thus can form three research questions, which each of the subsequent sections will attempt to answer:
+\subsection{Research question(s)}
+I will be looking at evaluating three separate aspects of the implementation and thus can form three research questions, which each of the subsequent sections will attempt to answer:
 \begin{enumerate}
   \item How significant is the performance hit by proxing the connection through FlyTrap, as opposed to directly connecting to the broker?
-  \item How exensive would be operation of FlyTrap on Proof-of-Stake type of blockchain network?
+  \item How expensive would be operation of FlyTrap on Proof-of-Stake type of blockchain network?
   \item Does the software fulfil specified requirements?
 \end{enumerate}
 \subsection{Experiments}
-Each of the questions specified above will have its own designated test. To test the performance hit, 
+Each of the questions specified above will have its own designated test. To test the performance impact, I will run the same MQTT client that was written for the purposes of this project in one situation pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will take time between sending initial CONNECT packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the third measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Stacked'') to take into account caching capabilities. Everything will also be repeated with TLS both enabled and disabled.
+
+To test the cost, Ganache testing network will be used. Six operations will be performed 100 times, exposing operation's cost in Gas. Then, those prices will be averaged and translated into USD for a clearer overview.
+
+Finally, to test the requirements, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software.
 \subsection{Testing environment}
 Tests were performed on the University-provided hardware, with the specs as below:
 \subsubsection{Hardware}
@@ -174,3 +178,7 @@ Here we are just looking at verifying who can access particular resource, as we 
     \label{fig:scenario3}
 \end{figure}
 \section{Results}
+\subsection{Latency Evaluation}
+The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Stacked'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice. 
+\subsection{Cost Evaluation}
+For the cost evaluation, the most expensive operation would be creation of the new contract, coming down to \$2.03. Contract contains the barebone definition of structures used by FlyTrap, so high price was expected. Though, this only needs to be performed - the contract can be reused for as many topics as it is necessary. The remaining operations (which would be also performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales lineary and cost remains the same, regardless the current size of the contract and amount of pre-existing topics/publishers/subscribers.
