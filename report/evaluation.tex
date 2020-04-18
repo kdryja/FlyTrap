@@ -29,11 +29,50 @@ All source code from the project was compiled into binaries before execution.
 
 \section{Latency Evaluation}
 \subsection{Plain TCP}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{latency_notls}
+    \caption{Response times of most common MQTT requests on plain TCP connection}
+    \label{fig:latency_notls}
+\end{figure}
+
+\begin{table}[]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Test Data}   & \textbf{p-value} \\ \hline
+CONNECT:Vanilla vs FlyTrap    & 8.60E-20         \\ \hline
+SUBSCRIBE: Vanilla vs FlyTrap & 6.31E-50         \\ \hline
+PUBLISH: Vanilla vs FlyTrap   & 4.53E-33         \\ \hline
+\end{tabular}
+\caption{Outcome of two-tailed test on each the MQTT packets considered on plain TCP connection}
+\label{tab:ttest-notls}
+\end{table}
+
 % \subsubsection{CONNECT}
 % \subsubsection{SUBSCRIBE}
 % \subsubsection{PUBLISH}
 
 \subsection{With TLS}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{latency_tls}
+    \caption{Response times of most common MQTT requests connection with SSL/TLS encryption}
+    \label{fig:latency_tls}
+\end{figure}
+
+\begin{table}[]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Test Data}   & \textbf{p-value} \\ \hline
+CONNECT:Vanilla vs FlyTrap    & 2.16E-69         \\ \hline
+SUBSCRIBE: Vanilla vs FlyTrap & 7.89E-84         \\ \hline
+PUBLISH: Vanilla vs FlyTrap   & 5.67E-79         \\ \hline
+\end{tabular}
+\caption{Outcome of two-tailed test on each the MQTT packets considered for TLS-encrypted connection}
+\label{tab:ttest-tls}
+\end{table}
 % \subsubsection{CONNECT}
 % \subsubsection{SUBSCRIBE}
 % \subsubsection{PUBLISH}
@@ -46,18 +85,70 @@ Six operations performed by FlyTrap were executed a hundred times to extract the
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{cost}
-    \caption{Comparison of cost of various operations on blockchain}
+    \caption{Cost comparison of various operations on blockchain}
     \label{fig:cost}
 \end{figure}
-\subsection{Creating a new contract}
-\subsection{Creating a new topic}
-\subsection{Adding publisher/subscriber}
-\subsection{Summary}
+
 
 \section{Scenarios Evaluation}
-\subsection{Setup}
-\subsection{Scenario \#1}
-\subsection{Scenario \#2}
-\subsection{Scenario \#3}
+In the last test for the evaluation we will be looking at verifying whether the produced software meets the defined requirements in chapter 3. This will focus mostly on a walk-through each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the user story.
 
+Scenario \#5 has been omitted, as the security aspect will be apparent through the remaining tests.
+\subsection{Setup}
+Each of those scenarios will share common setup steps, which will setup the initial network and proxy. I am going to walk through those steps here - which then can be assumed to be executed prior to any of the subsequent scenarios.
+\paragraph{Step 1} - configure your blockchain. For the sake of this experiment, I'm going to use Ganache, which will start a test network, with accounts that have 100 ETH pre-filled currency. Once started, you should obtain a window similar to figure \ref{fig:ganache}.
+\paragraph{Step 2} - set endpoint for your blockchain node (Ganache default) and create a new contract for FlyTrap.
+\begin{lstlisting}[language=bash]
+$ export BLOCKCHAIN_ADDRESS="http://localhost:7545"
+$ go run cmd/blockchain/main.go -new -contract=""
+2020/04/18 20:28:44 Generated new contract, address is:
+0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f
+\end{lstlisting}
+\paragraph{Step 3} - set contract as environmental variable, add new topic and add publishers/subscribers.
+\begin{lstlisting}[language=bash,breaklines=true]
+$ export BLOCKCHAIN_CLIENT="0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f"
+$ go run cmd/blockchain/main.go -new_topic "creating test topic" -topic "TopicName"
+$ go run cmd/blockchain/main.go -topic "TopicName" -client "<client_pubkey>" -pub "adding test publisher"
+$ go run cmd/blockchain/main.go -topic "TopicName" -client "<client_pubkey>" -sub "adding test subscriber"
+\end{lstlisting}
+\paragraph{Step 4} - start web server. Now you should be able to access the website under localhost:8081.
+\begin{lstlisting}[language=bash,breaklines=true]
+$ go run webapp/main.go
+\end{lstlisting}
+\paragraph{Step 5} - finally, we are ready to start our FlyTrap proxy. The command will assume TLS as default, with summary reports generated every hour, connection to test mosquitto broker and starts accepting connections under port 8888.
+\begin{lstlisting}[language=bash,breaklines=true]
+go run cmd/flytrap/main.go -b-freq=1h
+2020/04/18 21:04:15 Now accepting connections under :8888
+\end{lstlisting}
+\subsection{Scenario \#1}
+For this scenario, we are looking to restrict access to a specific topic, only to people connecting from country which has been permitted. To do so, we will need to slightly modify step 2 from the setup process adding an extra `country' flag to the command, as follows:
+\begin{lstlisting}[language=bash,breaklines=true]
+$ export BLOCKCHAIN_CLIENT="0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f"
+$ go run cmd/blockchain/main.go -new_topic "creating test topic" -topic "RestrictedTopic" -country="GB"
+\end{lstlisting}
+From now on, only people connecting from British IPs will be allowed, everyone else will be presented with the following message:
+\begin{lstlisting}[language=bash,breaklines=true]
+$ go run client.go -pub=20 -tls=false -priv="privkey1.asc"
+2020/04/18 21:04:17 Using cached signature & public key
+2020/04/18 21:04:17 Publishing message: Here Be Dragons #0
+panic: error publishing: The PUBLISH is not authorized.
+\end{lstlisting}
+\subsection{Scenario \#2}
+This scenario requires us to determine who access the requested resource on the specific day, so we can determine the scope of the leak. Once the steps in the setup have been completed (in particular, we are about `freq' option) and the leak happens, we are ready to inspect the website.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{scenario2}
+    \caption{Sensitive topics report}
+    \label{fig:scenario2}
+\end{figure}
+Figure \ref{fig:scenario2} shows how the website would look like upon inspecting the access summaries. We can see that on April 18th in the evening, topic `MyTopic1' was accessed by a single person with the shown public key. Now, we are able to trace the leakage down to a single person and verify whether their credentials were compromised to further assess the damags.
+\subsection{Scenario \#3}
+Here we are just looking at verifying who can access particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect "Topic/Person" part of the webapp, which would allow us to see a list of public keys that can access given topic, as per figure \ref{fig:}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{scenario3}
+    \caption{Current Access Control List summary}
+    \label{fig:scenario3}
+\end{figure}
 \section{Results}
