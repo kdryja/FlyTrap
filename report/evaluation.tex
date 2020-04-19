@@ -83,12 +83,12 @@ Note: as no caching occurs during CONNECT stage, ``FlyTrap - Stacked'' has been 
 2           & SUBSCRIBE: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 3           & PUBLISH: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
-\caption{Outcome of two-tailed t-test on each the MQTT packets considered on plain TCP connection}
+\caption{Outcome of statistical tests on each the MQTT packets considered on plain TCP connection}
 \label{tab:ttest-notls}
 \end{table}
 
 \subsection{With TLS}
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{latency_tls}
     \caption{Response times of most common MQTT requests connection with SSL/TLS encryption}
