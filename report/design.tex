@@ -14,8 +14,8 @@ Figure \ref{fig:flytrap} presents an overview of the system, decomposing it onto
 
 To overview, we can distinguish four layers:
 \begin{description}
-    \item[Consumer Layer] - layer responsible for interacting with end-devices. To them, FlyTrap should be indistinguishable from normal MQTT broker and thus accepts/responds with MQTT v5.0 compliant TCP/TLS packets. In order to compute the signature and attach it to 
-    \item[Consumer Layer] - layer where FlyTrap acts like a client for MQTT Broker. Similar to Consumer Layer, all packets sent by FlyTrap need to be compliant with MQTT standard in order to receive valid responses from the broker. In this situation, used MQTT broker is not relevant - as long as it implements the standard.
+    \item[Consumer Layer] - layer responsible for interacting with end-devices. To them, FlyTrap should be indistinguishable from normal MQTT broker and thus accepts/responds with MQTT v5.0 compliant TCP/TLS packets. 
+    \item[Consumer Layer] - layer where FlyTrap acts like a client for MQTT Broker. Similar to Consumer Layer, all packets sent by FlyTrap need to be compliant with MQTT standard in order to receive valid responses from the broker. In this situation, used broker is not relevant - as long as it implements the standard and responds with standarised MQTT packets.
     \item[Blockchain Layer] - layer in which FlyTrap performs communication with the Ethereum node through a separate CLI. FlyTrap is capable of either reading the past contracts/transactions or submitting new ones. That is also the only way to amend the state of the blockchain - given the private master key has remained secret.
     \item[Presentation Layer] - layer used by FlyTrap's end-users which allows to overview the state of the blockchain in a user-friendly way, easily extracting most relevant information such as recent access changes or audit trail for major operations on the chain.
 \end{description}
@@ -33,9 +33,9 @@ To provide further context, figure \ref{fig:workflow_success} provides an exampl
 Explanation of each step:
 \begin{enumerate}\addtocounter{enumi}{-1}
     \item Marked as optional since each client can accept a pre-computed signature, which can be loaded onto the device; this can be helpful for situations where there is not enough computational power for calculations. (\textbf{CL})
-    \item client sends CONNECT packet, including signature + public key in the optional fields of MQTT message. (\textbf{CL})
+    \item Client sends CONNECT packet, including signature + public key in the optional fields of MQTT message. (\textbf{CL})
     \item FlyTrap will extract the signature from the optional field and then verify its integrity. It will also check if the client has not been attempting many unsuccessful connections. Finally, FlyTrap will respond with CONNACK, signalling to the client that it may now submit relevant payload packets. If the integrity check has failed, CONNACK would also have a flipped flag indicating rejected connection and cease further communication. (\textbf{CL})
-    \item client will now forward the relevant PUBLISH/SUBSCRIBE packet to FlyTrap (as it still believes that it is a regular MQTT broker). (\textbf{CL})
+    \item Client will now forward the relevant PUBLISH/SUBSCRIBE packet to FlyTrap (as it still believes that it is a regular MQTT broker). (\textbf{CL})
     \item FlyTrap will now extract requested topic from the MQTT packet and communicate with the blockchain, presenting Public Key and requested topic to verify whether data can be accessed. For this example, the access check was successful. (\textbf{BL})
     \item FlyTrap proxies (unchanged) PUBLISH packet to the actual MQTT broker. (\textbf{ML})
     \item MQTT broker will now respond with PUBACK, indicating successful PUBLISH. (\textbf{ML})
@@ -46,10 +46,10 @@ Explanation of each step:
 Operation similar as in the previous section with the difference being that this time connection is not allowed, as the presented Public Key is not allowed to publish information on the given topic. For the brevity sake, I will skip explaining steps 0-3 - as they are identical as with the successful scenario. I will also use the same notation to signify which layer is responsible for this operation.
 
 \begin{enumerate}\addtocounter{enumi}{4}
-    \item Having verified authenticity of Public Key, FlyTrap again tries to verify with the Smart Contract whether the client can access the topic. This time though, the response is negative, and the client is not allowed to publish on the requested topic.
+    \item[4-5.] Having verified authenticity of Public Key, FlyTrap again tries to verify with the Smart Contract whether the client can access the topic. This time though, the response is negative, and the client is not allowed to publish on the requested topic.
     \item FlyTrap will send PUBACK back to the client, setting reason code\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901124} to "Not authorised", at the same time terminating the connection with the client. To client, the situation is identical as with providing invalid username/password for a vanilla MQTT broker.
-    \item framework will verify with the cached values to check if the originating IP has not exceeded the maximum number of allowed tries. If it did, it could place it on a blacklist, and every subsequent connection will be denied for the specified time. In this example, that is 5 minutes. This step is optional
-    \item If the ban happens, FlyTrap will also register a new transaction on the blockchain to persistently log this event to check potential attack spikes or generate reports w.r.t.  captured data. This step is also optional, as it depends on the previous one.
+    \item Framework will verify with the cached values to check if the originating IP has not exceeded the maximum number of allowed tries. If it did, it could place it on a blacklist, and every subsequent connection will be denied for the specified time. In this example, that is 5 minutes. This step is optional.
+    \item If the ban happens, FlyTrap will also register a new transaction on the blockchain to persistently log this event to check potential attack spikes or generate reports w.r.t.  captured data. This step is also optional.
 \end{enumerate}
 
 Note: as you can see, the MQTT Broker is never connected to nor contacted with the potentially malicious message. FlyTrap rejects the message and forbids the connection. 
@@ -61,11 +61,37 @@ Note: as you can see, the MQTT Broker is never connected to nor contacted with t
 \end{figure}
 
 \section{Consumer Layer}
-First and foremost, the consumer layer. This part of the framework handles all connections between clients attempting to PUBLISH or SUBSCRIBE to data. To them, FlyTrap should be indistinguishable from a vanilla MQTT broker, which should be accepting all regular MQTT payloads. Though since every MQTT client produced in this project can connect with every MQTT Broker, a specific client is required for connection with FlyTrap - which is further explained in the section below. Moreover, an approach of identifying whether the client holds a Private Key for the presented Public Key is also needed and explained. 
+First and foremost, the consumer layer. This part of the framework handles all connections between clients attempting to PUBLISH or SUBSCRIBE to data. To them, FlyTrap should be indistinguishable from a vanilla MQTT broker, which should be accepting all regular MQTT payloads. Though since the MQTT client produced in this project can connect with every MQTT Broker, a specific client is required for connection with FlyTrap (due to extra authentication fields) - which is further explained in the section below. Moreover, an approach of identifying whether the client holds a Private Key for the presented Public Key is also needed and explained. 
 \subsection{MQTT Client}
 As mentioned above, FlyTrap makes use of the introduced in MQTT v5.0 User Properties\footnote{https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901068}, allowing clients to include key-value pairs in the MQTT packets, which then can be utilised by the brokers (or other middleware). That is also where the signature and public key is being placed by the client when attempting connection with FlyTrap - and that is also the need for a custom client since regular clients are not capable of producing highly specialised signatures to connect with Ethereum blockchain.
 
-It is important to point out, that the client is only slightly altered to provide (and compute if needed) the signature from public/private key pair. It is not a central system of the framework, as any client capable of setting User Properties for MQTT message would be sufficient, though, for the purposes of this dissertation, custom implementation has also been designed and included.
+It is important to point out, that the client is only slightly altered to provide (and compute if needed) the signature from public/private key pair. It is not a central system of the framework, as any client capable of setting User Properties for MQTT message would be sufficient, though, for the purposes of this dissertation, custom implementation has also been designed and included. The User Properties are also ignored by regular brokers.
+
+\subsection{Authenticity of public keys}
+Public Keys from the Ethereum wallet are used as an identifier when determining whether a client can access a given resource or not. Though it only handles a part of the problem. Public Keys, by definition, are public, meaning that anyone could impersonate legitimate holders of the public/private key pairs. This calls for an approach similar to the Certificate Authority problem when attempting encrypted HTTPS connections. Unfortunately, FlyTrap cannot expect every IoT device to have its own set of certificates, which would then need to be trusted by the framework in order to become recognisable - as those devices are often of limited storage and power.
+
+In order to solve the problem of establishing whether the person presenting a public key also holds a corresponding key, novel authentication method utilising signatures is used. Below you can see two figures, each outlining client-side and FlyTrap side of the signing/verification process.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{sign}
+    \caption{Client signing Public Key and attaching it to the message}
+    \label{fig:sign}
+\end{figure}
+
+Figure \ref{fig:sign} shows how client - in possession of public/private key pair produces a signature which then is attached to the final MQTT CONNECT packet. First, it hashes the public key using Keccak-256 algorithm \cite{bertoni2009keccak} (commonly used in Ethereum, e.g. for block hashes), then it uses the private key to sign this hash and attaches obtained signature to the user properties part of the MQTT CONNECT message. Plain-text version of the public key is also attached in another field. Ethereum signatures are created by signing arbitrary bytes through a generated private key - which then can only be verified using the corresponding public key. It is also possible to extract signed bytes from the same signature in the process.
+
+\begin{figure}[h]
+    \centering
+     \makebox[\textwidth][c]{\includegraphics[width=1.1\textwidth]{verify}}
+    \caption{FlyTrap verifying the signature}
+    \label{fig:verify}
+\end{figure}
+
+Then, as per figure \ref{fig:verify}, FlyTrap receives the CONNECT packet and extracts both the signature \& public key from the message. As the corresponding private key for the public key was used to produce the signature, framework verifies this through Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - along with the signed value (in this case, hashed public key) by the client. Then, framework can verify whether both signature was indeed created with the private key corresponding to the attached public key and (by hashing it again) compare the extracted value with the attached public key. This gives a definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
+
+For Ethereum, both Verification Algorithm and Signing Algorithm are part of Elliptic Curve Digital Signature Algorithm \citep{johnson2001elliptic}, where a public key has exactly 160 bits (which, coincidentally, is also used for ETH addresses). Hashing Algorithm - as mentioned above - is Keccak-256.
+
 \subsection{Secure Proxy}
 In order to enable FlyTrap to make decisions on whether the requests for publishing or subscribing should be accepted or denied, a secure proxy needs to be established between the clients and the MQTT Broker. As the communication between the broker and the consumers happens on Transport Layer, it is possible to insert a middleman who would be capable of inspecting the packets flowing through, dissecting it for relevant information and finally make a decision about their future journey - all without the client ever knowing that someone has intercepted the connection. 
 \begin{figure}[h]
@@ -87,41 +113,17 @@ TLS sessions can be summarised in the following steps:
 \item Encrypted session starts
 \end{enumerate}
 
-It is vital to point out, that due to step 3 requiring server's certificate, FlyTrap will need to either obtain a copy of broker's certificates or generate a new pair, ensuring that the connecting clients will trust it. Though secure TLS connection remains optional, as it is understandable that sometimes enhanced security might cause undesirable performance losses or the MQTT broker simply does not support TLS connections - TLS will be configurable via command-line arguments.
+It is vital to point out, that due to step 3 requiring server's certificate, FlyTrap will need to either obtain a copy of broker's certificates or generate a new pair, ensuring that the connecting clients will trust it. Though secure TLS connection remains optional, as it is understandable that sometimes enhanced security might cause undesirable performance losses (as found during the evaluation) or the MQTT broker simply does not support TLS connections - TLS will be configurable via command-line arguments. It is also possible to set TLS only on half of the journey, i.e. Client <-> FlyTrap will be TLS-encrypted, but FlyTrap <-> MQTT Broker is not - and vice versa.
 
-For every new connection, a new thread (or, goroutine) is spawned which has its own context and is separated from others.
+For every new connection, a new thread (or, goroutine\footnote{Concept of threading defined by Golang. Goroutines can either be executed in the same address space or on a separate core, but it's all determined during runtime by Go runtime}) is spawned which has its own context and is separated from others.
 
-\subsection{Authenticity of public keys}
-Public Keys from the Ethereum wallet are used as an identifier when determining whether a client can access a given resource or not. Though it only handles a part of the problem. Public Keys, by definition, are public, meaning that anyone could impersonate legitimate holders of the public/private key. This calls for an approach similar to the Certificate Authority problem when attempting encrypted HTTPS connections. Unfortunately, FlyTrap cannot expect every IoT device to have its own set of certificates, which would then need to be trusted by the framework in order to become recognisable - as those devices are often of limited storage and power.
-
-In order to solve the problem of establishing whether the person presenting a public key also holds a corresponding key, signatures are used. Below you can see two figures, each outlining client-side and FlyTrap side of the signing/verification process.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{sign}
-    \caption{Client signing Public Key and attaching it to the message}
-    \label{fig:sign}
-\end{figure}
-
-Figure \ref{fig:sign} shows how client - in possession of public/private key pair produces a signature which then is attached to the final MQTT CONNECT packet. First, it hashes the public key using Keccak-256 algorithm \cite{bertoni2009keccak} (commonly used in Ethereum, e.g. for block hashes), then it uses the private key to sign this hash and attaches obtained signature to the user properties part of the MQTT CONNECT message. Plain-text version of the public key is also attached in another field. Ethereum signatures are created by signing arbitrary bytes through a generated private key - which then can only be verified using the corresponding public key. It is also possible to extract signed bytes from the same signature in the process.
-
-\begin{figure}[h]
-    \centering
-     \makebox[\textwidth][c]{\includegraphics[width=1.1\textwidth]{verify}}
-    \caption{FlyTrap verifying the signature}
-    \label{fig:verify}
-\end{figure}
-
-Then, as per figure \ref{fig:verify}, FlyTrap receives the CONNECT packet and extracts both the signature \& public key from the message. As the corresponding private key for the public key was used to produce the signature, framework verifies this through Verification Algorithm. The output is a binary yes/no value - determining whether the public key was used to create the signature - along with the signed value (in this case, hashed public key) by the client. Then, framework can verify whether both signature was indeed created with the private key corresponding to the attached public key and (by hashing it again) compare the extracted value with the attached public key. This gives a definite answer that the person presenting the public key also holds the private key and thus is successfully authenticated.
-
-For Ethereum, both Verification Algorithm and Signing Algorithm is part of Elliptic Curve Digital Signature Algorithm \citep{johnson2001elliptic}, where a public key has exactly 160 bits (which, coincidentally, is also used for ETH addresses). Hashing Algorithm - as mentioned above - is Keccak-256.
 \subsection{Protecting from brute-force attacks}
 Some of the failed attempts can result in a persistent log to the blockchain, which often implicates costs - primarily if FlyTrap is operating on a public blockchain. This can open a door for malicious actors attempting to drain the framework from available funds by logging many operations in a short period. Distributed Denial of Service (DDoS) attacks can also occur and overload the server, which - depending on hardware - could only handle a limited number of simultaneous connections.
 
 To combat those problems, framework will track any failed authentication attempts in an internal dictionary, mapping IP address to the number of failed attempts. This dictionary then will be consulted whenever a new connection is initiated. If it is, then the TCP link will be shut down, and the client informed that it is currently blacklisted. Though to give the benefit of a doubt, there is a grace period of 2 prior failed attempts before a timed ban is applied. Whenever failed authentication occurs, the counter is increased by one - and if that count increases 3, the connection is terminated and dictionary updated with time 5 minutes in the future - that is the earliest time given IP can attempt the connection again.
 \section{Broker Layer}
 
-This layer is where the communication with the actual MQTT Broker occurs. Typically, it would be desirable to place both FlyTrap and the broker (e.g. Mosquitto) on the same machine (or at least the same network) to minimise the latency - though it is not necessary. Depending on the outcome of the authorisation from the Client Layer, every packet from the client is forwarded to the broker, and every packet from the broker sent back to the client. Since each connection is an individual thread, it also maintains information such as originating (\& destination) address and port - and this information will persist as long as the original connection Client <=> FlyTrap remains open - which will only be terminated if client times out, requests disconnection or for any reason authentication to FlyTrap fails.
+This layer is where the communication with the actual MQTT Broker occurs. Typically, it would be desirable to place both FlyTrap and the broker (e.g. Mosquitto) on the same machine (or at least the same network) to minimise the latency - though it is not necessary. Depending on the outcome of the authorisation from the Client Layer, every packet from the client is forwarded to the broker, and every packet from the broker sent back to the client. Since each connection is an individual thread (running on a separate port), it also maintains information such as originating (\& destination) address and port - and this information will persist as long as the original connection Client <=> FlyTrap remains open - which will only be terminated if client times out, requests disconnection or for any reason authentication to FlyTrap fails.
 
 Similar to the section discussing encrypted connection, FlyTrap is capable of either connecting with TLS-capable brokers or via plain TCP if desired (though keeping the security implications in mind, as everyone intercepting the connection would be able to read the payload).
 
@@ -169,7 +171,7 @@ Apart from base structure holding information inside the contract, events are al
         \item[RevokeSub] - when a person is removed from authorised subscribers in the topic
         \item[WrongCountry] - when a connection was attempted from an IP located in country that's not permitted
         \item[Banned] - when a person failed to authorise when connecting for three times in a row and was placed on a blacklist
-        \item[Summary] - system-generated log for sensitive topics (see \ref{sec:reports}
+        \item[Summary] - system-generated log for sensitive topics (see \ref{sec:reports})
     \end{description}
     \item[name] - string used to signify which topic was affected. If an action does not involve a topic, it will contain the offending IP address used to make the request.
     \item[reason] - string provided either by the user or by the system to provide further context on the action (in particular, to answer questions given by GDPR, ``why was access provisioned?'')
@@ -178,11 +180,11 @@ Apart from base structure holding information inside the contract, events are al
 \subsection{Report Generation}\label{sec:reports}
 For the most sensitive topics, it is possible to enhance the security with extra measures and reporting. For every topic marked as sensitive, FlyTrap would maintain an in-memory list of all publishers or subscribers that have recently accessed the topic. Then, every specified period of time, a log will be generated and placed on blockchain that would outline all Ethereum public keys that have either published or subscribed to the given topic.
 
-To put it in an example: if the reporting frequency is set at 30minutes and the system is started at 12:00, then client A publishes to topic  X at 12:05, and client B publishes to topic X at 12:15, finally, at 12:30 a report would be generated and placed on the blockchain which would signify that both client A \& client B published to topic X between 12:00 and 12:30. The reports should be read as follows: In the past X minutes, following public keys accessed following sensitive topics. 
+To put it in a perspective: if the reporting frequency is set at 30 minutes and the system is started at 12:00, then client A publishes to topic  X at 12:05, and client B publishes to topic X at 12:15, finally, at 12:30 a report would be generated and placed on the blockchain which would signify that both client A \& client B published to topic X between 12:00 and 12:30. The reports should be read as follows: In the past Y minutes\footnote{where Y is the frequency}, following public keys accessed following sensitive topics. 
 
 It is important to consider the implications of more and less frequent reporting - since every transaction placed on a blockchain with PoW consensus algorithm has embedded gas price\footnote{Gas is a unit of work performed on Ethereum. The more complex the operation, the more gas is required, and thus more ETH currency is needed}, so the owner of the system would need to either accept the increased costs or decrease the reporting frequency. Of course, for PoA algorithms, there is no gas cost, but still, the chain code's size would grow faster in case of more frequent reporting. However, with decreased frequency, the precision also falls, so if our reporting is set to 24hrs, now we can only determine the access history in daily windows (rather than 30min ones, as shown in the example above).
 \subsection{Caching operations}
-Communicating with blockchain is a computationally expensive operation, and it is vital to ensure that it happens as rarely as possible in order to limit the latency caused by the security checks. Following the brute force approach, framework would issue a new request every time a connection starts - regardless whether it is part of a series of requests arriving in bulk. FlyTrap is using Ethereum as a de facto database layer, but at the same time aiming to cache the operations in-memory, which can be then quickly accessed if repeated requests occur. For checking the permissions, whenever a new request is issued, the result is stored in a map with mutex lock (to avoid race conditions).
+Communicating with blockchain is a computationally expensive operation, and it is vital to ensure that it happens as rarely as possible in order to limit the latency caused by the security checks. Following the brute force approach, framework would issue a new request every time a connection starts - regardless whether it is part of a series of requests arriving in bulk. FlyTrap is using Ethereum as a de facto database layer, but at the same time aiming to cache the operations in-memory, which can be then quickly accessed if repeated requests occur. For checking the permissions, whenever a new request is issued, the result is stored in a map with mutex lock (to avoid race conditions between different goroutines).
 
 To avoid memory filling too quickly (and eventually reaching the capabilities of the server that is running the software), the mapping used for caching will be erased every 24hrs or when the process is terminated/restarted - whichever happens first.
 
@@ -196,4 +198,4 @@ The website will not allow for writing data to blockchain (thus, does not requir
 
 Due to how blockchain is designed, it is not possible to lookup a transaction from specific time. Since it follows design of a linked-list, lookup of all elements is required to find requested date, thus resulting in the worst case complexity of $O(n)$, where $n$ is the amount of transactions in the smart contract. This might severely impact performance, especially as the chain grows, thus the web app will keep track of transaction hashes in 5-day intervals in-memory, updating as further requests are performed.
 
-Front-ends operations is also restricted by a time-constraint, i.e. it would be possible to request reports generated between 1970-01-01 and 1970-01-02, warning the user that less restrictive constraints might result in longer lookup times.
+Front-ends operations is also restricted by a time-constraint, i.e. it would be possible to request reports generated between 1970-01-01 and 1971-01-01, warning the user that less restrictive constraints might result in longer lookup times.
