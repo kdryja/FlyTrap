@@ -109,9 +109,15 @@ Statistical tests have been performed on all three datasets. Each of the 100 res
 \caption{Outcome of statistical tests on each the MQTT packets considered for TLS-encrypted connection}
 \label{tab:ttest-tls}
 \end{table}
-% \subsubsection{CONNECT}
-% \subsubsection{SUBSCRIBE}
-% \subsubsection{PUBLISH}
+
+\section{Scalability Evaluation}
+To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message through FlyTrap with TLS enabled. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. See figure \ref{fig:scale} with the outcome. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{scale}
+    \caption{Average response times with regards to number of concurrent clients}
+    \label{fig:scale}
+\end{figure}
 
 \section{Cost Evaluation}
 As mentioned, Proof-of-Authority networks do not have any currency involved and thus there is no reward for mining. But this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments and it's important to keep this cost to the minimum.
@@ -125,14 +131,6 @@ Six operations performed by FlyTrap were executed a hundred times to extract the
     \label{fig:cost}
 \end{figure}
 
-\section{Scalability Evaluation}
-To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message through FlyTrap with TLS enabled. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. See figure \ref{fig:scale} with the outcome. 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{scale}
-    \caption{Average response times with regards to number of concurrent clients}
-    \label{fig:scale}
-\end{figure}
 \section{Scenarios Evaluation}
 In the last test for the evaluation we will be looking at verifying whether the produced software meets the defined requirements in chapter 3. This will focus mostly on a walk-through each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the user story.
 
@@ -198,7 +196,9 @@ Here we are just looking at verifying who can access particular resource, as we 
 \subsection{Latency Evaluation}
 The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Stacked'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
 
-For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement.
+For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement and concludes the first research question.
+\subsection{Scalability Evaluation}
+On the tested machine, the response times remained constant, indicating that the proxy is capable of handling many concurrent clients without significant impact on performance. If desired, multiple FlyTrap instances can also be deployed across many machines - each pointing to the same broker, further enhacing the response times. This concludes the second research question.
 \subsection{Cost Evaluation}
 For the cost evaluation, the most expensive operation would be creation of the new contract, coming down to \$2.03. Contract contains the bare-bone definition of structures used by FlyTrap, so high price was expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would be also performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales linearly and cost remains the same, regardless the current size of the contract and amount of pre-existing topics/publishers/subscribers.
 \subsection{Scenario Evaluation}
