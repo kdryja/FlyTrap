@@ -7,6 +7,7 @@ This section will include details on how the experiments were designed, what wer
 I will be looking at evaluating three separate aspects of the implementation and thus can form three research questions, which each of the subsequent sections will attempt to answer:
 \begin{enumerate}
   \item How significant is the performance hit by proxing the connection through FlyTrap, as opposed to directly connecting to the broker?
+  \item Does the software scale up as number of concurrent connections goes up?
   \item How expensive would be operation of FlyTrap on Proof-of-Stake type of blockchain network?
   \item Does the software fulfil specified requirements?
 \end{enumerate}
@@ -15,6 +16,7 @@ Each of the questions specified above will have its own designated test.
 
 \begin{description}
     \item[Latency Evaluation] To test the performance impact, I will run the same MQTT client that was written for the purposes of this project in one situation pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will take time between sending initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the third measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Stacked'') to take into account performance gains caused by caching. Everything will also be repeated with TLS both enabled and disabled to measure the impact of double TLS connection.
+    \item[Scalability Evaluation] Adding onto latency evaluation, I will also look at how FlyTrap performs with many simultaneous connections. 100/1000/10000 clients sending a single PUBLISH packet will be initiated and their response times captured. 
     \item[Cost Evaluation] To test the cost, Ganache testing network will be used. Six operations will be performed 100 times, exposing operation's cost in Gas. Then, those prices will be averaged and translated into USD for a clearer overview.
     \item[Scenarios Evaluation] Finally, to test the requirements, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software.
 \end{description}
@@ -123,7 +125,14 @@ Six operations performed by FlyTrap were executed a hundred times to extract the
     \label{fig:cost}
 \end{figure}
 
-
+\section{Scalability Evaluation}
+To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message through FlyTrap with TLS enabled. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. See figure \ref{fig:scale} with the outcome. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{scale}
+    \caption{Average response times with regards to number of concurrent clients}
+    \label{fig:scale}
+\end{figure}
 \section{Scenarios Evaluation}
 In the last test for the evaluation we will be looking at verifying whether the produced software meets the defined requirements in chapter 3. This will focus mostly on a walk-through each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the user story.
 
