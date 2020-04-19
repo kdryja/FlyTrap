@@ -11,11 +11,14 @@ I will be looking at evaluating three separate aspects of the implementation and
   \item Does the software fulfil specified requirements?
 \end{enumerate}
 \subsection{Experiments}
-Each of the questions specified above will have its own designated test. To test the performance impact, I will run the same MQTT client that was written for the purposes of this project in one situation pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will take time between sending initial CONNECT packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the third measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Stacked'') to take into account caching capabilities. Everything will also be repeated with TLS both enabled and disabled.
+Each of the questions specified above will have its own designated test.
 
-To test the cost, Ganache testing network will be used. Six operations will be performed 100 times, exposing operation's cost in Gas. Then, those prices will be averaged and translated into USD for a clearer overview.
+\begin{description}
+    \item[Latency Evaluation] To test the performance impact, I will run the same MQTT client that was written for the purposes of this project in one situation pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will take time between sending initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the third measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Stacked'') to take into account performance gains caused by caching. Everything will also be repeated with TLS both enabled and disabled to measure the impact of double TLS connection.
+    \item[Cost Evaluation] To test the cost, Ganache testing network will be used. Six operations will be performed 100 times, exposing operation's cost in Gas. Then, those prices will be averaged and translated into USD for a clearer overview.
+    \item[Scenarios Evaluation] Finally, to test the requirements, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software.
+\end{description}
 
-Finally, to test the requirements, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software.
 \subsection{Testing environment}
 Tests were performed on the University-provided hardware, with the specs as below:
 \subsubsection{Hardware}
@@ -34,11 +37,11 @@ Cores              & 4                                \\ \hline
 L3 Cache           & 15 MB                            \\ \hline
 RAM                & 70 GB                            \\ \hline
 \end{tabular}
-\caption{Specification of the testing environment}
+\caption{Hardware of the testing environment}
 \label{tab:hw}
 \end{table}
 \subsubsection{Software}
-As network latency can be unpredictable and varied, all required software and frameworks have been locally installed in the machine, with FlyTrap communicating via local TCP ports. This also includes local instances for both MQTT broker and Ethereum node. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. Below you can find a list of specific software used for tests:
+As network latency can be unpredictable and varied, all required software and frameworks have been locally installed in the machine, with FlyTrap communicating via local TCP ports. This also includes local instances for both MQTT broker and Ethereum node. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. In table \ref{tab:sw} you can find a list of specific software used for tests:
 
 \begin{table}[]
 \centering
@@ -49,11 +52,18 @@ Blockchain        & Local instance of Geth 1.9.13 running blockchain with Proof-
 Golang            & Golang 1.13                                                              \\ \hline
 MQTT Broker       & Local instance of Mosquitto 1.6.9                                        \\ \hline
 \end{tabular}
+\caption{Software of the testing environment}
+\label{tab:sw}
 \end{table}
 
 All source code from the project was compiled into binaries before execution to further reduce potential noise.
 
 \section{Latency Evaluation}
+For this test we will be looking at comparing FlyTrap's performance against state-of-the-art, which in this situation would be plain MQTT Broker offering authentication through username/password. This test will provide two separate sets of results, each executed on a connection with either TLS enabled or disabled.
+
+Furthermore, as mentioned above, each packet was submitted 105 times, discarding the first 5 results. Then for each scenario, average is calculated and placed on a bar chart. Additionally, to ensure statistical significance a two-tailed t-test has been performed on CONNECT tests to extract p-value. For SUBSCRIBE/PUBLISH - as we are dealing with three data groups - Kruskal-Wallis Test (since data is not of a Gaussian distribution, thus cannot use One-Way ANOVA Test) has been used to determine whether null hypothesis can be rejected
+
+Note: as no caching occurs during CONNECT stage, ``FlyTrap - Stacked'' has been omitted, as it produces the same results as regular `FlyTrap'
 \subsection{Plain TCP}
 \begin{figure}[h]
     \centering
@@ -64,39 +74,37 @@ All source code from the project was compiled into binaries before execution to 
 
 \begin{table}[]
 \centering
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-\textbf{Test Data}   & \textbf{p-value} \\ \hline
-CONNECT:Vanilla vs FlyTrap    & 8.60E-20         \\ \hline
-SUBSCRIBE: Vanilla vs FlyTrap & 6.31E-50         \\ \hline
-PUBLISH: Vanilla vs FlyTrap   & 4.53E-33         \\ \hline
+\textbf{\#} & \textbf{Test Data}                       & \textbf{Performed Test} & \textbf{p-value}                      \\ \hline
+1           & CONNECT: Vanilla vs FlyTrap              & Two Tailed T-Test       & $8.60*10^{-20}$                    \\ \hline
+2           & SUBSCRIBE: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+3           & PUBLISH: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
-\caption{Outcome of two-tailed test on each the MQTT packets considered on plain TCP connection}
+\caption{Outcome of two-tailed t-test on each the MQTT packets considered on plain TCP connection}
 \label{tab:ttest-notls}
 \end{table}
 
-% \subsubsection{CONNECT}
-% \subsubsection{SUBSCRIBE}
-% \subsubsection{PUBLISH}
-
 \subsection{With TLS}
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{latency_tls}
     \caption{Response times of most common MQTT requests connection with SSL/TLS encryption}
     \label{fig:latency_tls}
 \end{figure}
 
+Statistical tests have been performed on all three datasets. Each of the 100 results for every packet has been compared with the counterpart, for example 100 CONNECT reponse times via Vanilla Broker vs 100 CONNECT reponse times via FlyTrap. This allows us to reject the null hypothesis, as for first test the \textit{p-value} is $<0.05$. Tests number 2. and 3. resulted with \textit{p-value}=0, which can be interpreted as significantly lower than 0.001.
+
 \begin{table}[]
 \centering
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|l|}
 \hline
-\textbf{Test Data}   & \textbf{p-value} \\ \hline
-CONNECT:Vanilla vs FlyTrap    & 2.16E-69         \\ \hline
-SUBSCRIBE: Vanilla vs FlyTrap & 7.89E-84         \\ \hline
-PUBLISH: Vanilla vs FlyTrap   & 5.67E-79         \\ \hline
+\textbf{\#} & \textbf{Test Data}                       & \textbf{Performed Test} & \textbf{p-value}                      \\ \hline
+1           & CONNECT: Vanilla vs FlyTrap              & Two Tailed T-Test       & $2.16*10^{-69}$                    \\ \hline
+2           & SUBSCRIBE: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+3           & PUBLISH: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
-\caption{Outcome of two-tailed test on each the MQTT packets considered for TLS-encrypted connection}
+\caption{Outcome of statistical tests on each the MQTT packets considered for TLS-encrypted connection}
 \label{tab:ttest-tls}
 \end{table}
 % \subsubsection{CONNECT}
@@ -143,7 +151,7 @@ $ go run webapp/main.go
 \end{lstlisting}
 \paragraph{Step 5} - finally, we are ready to start our FlyTrap proxy. The command will assume TLS as default, with summary reports generated every hour, connection to test mosquitto broker and starts accepting connections under port 8888.
 \begin{lstlisting}[language=bash,breaklines=true]
-go run cmd/flytrap/main.go -b-freq=1h
+$ go run cmd/flytrap/main.go -b-freq=1h
 2020/04/18 21:04:15 Now accepting connections under :8888
 \end{lstlisting}
 \subsection{Scenario \#1}
@@ -170,7 +178,7 @@ This scenario requires us to determine who access the requested resource on the 
 \end{figure}
 Figure \ref{fig:scenario2} shows how the website would look like upon inspecting the access summaries. We can see that on April 18th in the evening, topic `MyTopic1' was accessed by a single person with the shown public key. Now, we are able to trace the leakage down to a single person and verify whether their credentials were compromised to further assess the damages.
 \subsection{Scenario \#3}
-Here we are just looking at verifying who can access particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect "Topic/Person" part of the webapp, which would allow us to see a list of public keys that can access given topic, as per figure \ref{fig:scenario3}
+Here we are just looking at verifying who can access particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect "Topic/Person" part of the webapp, which would allow us to see a list of public keys that can access given topic, as per figure \ref{fig:scenario3}. Then, the system administrator would be able to correlate public key with the piece of infrastructure accessing the information and ensure that the access is revoked along with 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{scenario3}
@@ -179,6 +187,10 @@ Here we are just looking at verifying who can access particular resource, as we 
 \end{figure}
 \section{Results}
 \subsection{Latency Evaluation}
-The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Stacked'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice. 
+The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Stacked'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
+
+For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement.
 \subsection{Cost Evaluation}
-For the cost evaluation, the most expensive operation would be creation of the new contract, coming down to \$2.03. Contract contains the barebone definition of structures used by FlyTrap, so high price was expected. Though, this only needs to be performed - the contract can be reused for as many topics as it is necessary. The remaining operations (which would be also performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales lineary and cost remains the same, regardless the current size of the contract and amount of pre-existing topics/publishers/subscribers.
+For the cost evaluation, the most expensive operation would be creation of the new contract, coming down to \$2.03. Contract contains the bare-bone definition of structures used by FlyTrap, so high price was expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would be also performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales linearly and cost remains the same, regardless the current size of the contract and amount of pre-existing topics/publishers/subscribers.
+\subsection{Scenario Evaluation}
+By walking through each of the scenarios, I was able to prove that the software fulfills the business need specified at the beginning of this paper. Evaluation of Scenario \#4 and Scenario \#5 was omitted, as they concern one of the core features. Please refer to the User Manual for an explanation on how to set a cost on addining new publishers or subscribers.
