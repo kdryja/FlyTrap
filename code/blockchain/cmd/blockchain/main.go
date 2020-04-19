@@ -27,6 +27,7 @@ var (
 	country     = flag.String("country", "GB", "topic will only be accessible to people connecting from this country. 2 letter ISO code.")
 	pubCost     = flag.Int64("pub_cost", 0, "cost of adding as publisher in wei")
 	subCost     = flag.Int64("pub_cost", 0, "cost of adding as subscriber in wei")
+	sensitive   = flag.Bool("s", true, "whether new topic is to be marked as sensitive")
 )
 
 func main() {
@@ -51,7 +52,7 @@ func main() {
 	if *newTopic != "" {
 		b.Opts.Value = big.NewInt(1000)
 		c := *country
-		if _, err := b.Instance.AddTopic(b.Opts, *topicName, [2]byte{c[0], c[1]}, big.NewInt(*pubCost), big.NewInt(*subCost), *newTopic, true); err != nil {
+		if _, err := b.Instance.AddTopic(b.Opts, *topicName, [2]byte{c[0], c[1]}, big.NewInt(*pubCost), big.NewInt(*subCost), *newTopic, *sensitive); err != nil {
 			log.Fatal(err)
 		}
 	}
