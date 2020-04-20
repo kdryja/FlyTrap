@@ -8,14 +8,14 @@ To install Ganache, please follow instructions on https://www.trufflesuite.com/g
 You can click on the key icon on the far right in order to retrieve account's private key. I recommend saving the first one as `privkey.asc' and the second one as `clientPriv.asc'. Those will be our private keys used in further examples.
 \section{MQTT Broker}
 We will be using HiveMQ test broker located under broker.hivemq.com:1883, so you don't need a local instance on your machine. HiveMQ doesn't support TLS connections, so all examples will have tls flag set to false, though if desired, it can be set to true, as long as the target support TLS and provides a certificate.
-\section{Executables command line parameters}
+\section{Command line parameters}
 \subsection{Common env variables}\label{sec:envvars}
 FlyTrap and Blockchain CLI makes use of two environmental variables. It is very important to set them before performing any action:
 \begin{description}
   \item[FLYTRAP\_CONTRACT] - public address of FlyTrap's smart contract. You will not know it until you run blockchain CLI with -new flag. Once you obtain it, it's recommended to update this variable.
   \item[BLOCKCHAIN\_ADRRESS] - endpoint to access Ethereum node. For Ganache, default is http://localhost:7545.
 \end{description}
-I recommend to put the following two lines in your .bashrc file:
+I recommend to put the following two lines in your .bashrc file (or corresponding rc file, if your shell is different than bash):
 \begin{lstlisting}[language=bash,breaklines=true]
 export BLOCKCHAIN_ADDRESS="http://localhost:7545"
 export FLYTRAP_CONTRACT="<contract address>"

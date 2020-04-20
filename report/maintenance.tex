@@ -3,6 +3,7 @@
 \section{Prerequisites}
 To bring the whole framework up, three elements will be needed:
 \begin{itemize}
+  \item Linux - at the moment, the software stack is only compatible with Linux environments. It has been tested on ArchLinux and Ubutnu 16.04 - and for those distributions operation can be guaranteed. For other Linux distros, your mileage may vary.
   \item Golang - to compile (or run) all source files. All third-party Golang packages required by this project are managed through Go Modules\footnote{https://blog.golang.org/using-go-modules}, so there is no further action needed. Upon compilation, Go runtime will download all requirements and place them in your \$PATH (provided you have successfully installed Go). If desired, they can be manually inspected in `go.mod' file in project's root.
   \item Blockchain Node - either a dummy one provided by Ganache or a live node started through Geth. Remote nodes are also accepted.
   \item MQTT Broker - either a local broker (e.g. mosquitto on Ubuntu) or an online broker, reachable via TCP/TLS (e.g. test.mosquitto.org)

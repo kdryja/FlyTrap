@@ -4,30 +4,40 @@ FlyTrap imposes an overhead to vanilla MQTT brokers. It is vital to ensure that 
 \section{Experimental design}
 This section will include details on how the experiments were designed, what were the main motivations behind each of them along with the description of hardware \& software used, to ensure easy reproducibility.
 \subsection{Research question(s)}
-I will be looking at evaluating three separate aspects of the implementation and thus can form three research questions, which each of the subsequent sections will attempt to answer:
+I will be looking at evaluating four separate aspects of the implementation and thus can form four research questions, which each of the subsequent sections will attempt to answer:
 \begin{enumerate}
-  \item How significant is the performance hit by proxing the connection through FlyTrap, as opposed to directly connecting to the broker?
-  \item Does the software scale up as number of concurrent connections goes up?
+  \item How significant is the performance hit by proxing the connection through FlyTrap, as opposed to directly connecting to the broker (further referred as state-of-the-art)?
+  \item How does FlyTrap's proxy scale as number of concurrent connections goes up?
   \item How expensive would be operation of FlyTrap on Proof-of-Stake type of blockchain network?
   \item Does the software fulfil specified requirements?
 \end{enumerate}
 \subsection{Experiments}
 Each of the questions specified above will have its own designated test.
 
-\begin{description}
-    \item[Latency Evaluation] To test the performance impact, I will run the same MQTT client that was written for the purposes of this project in one situation pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will take time between sending initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the third measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Stacked'') to take into account performance gains caused by caching. Everything will also be repeated with TLS both enabled and disabled to measure the impact of double TLS connection.
-    \item[Scalability Evaluation] Adding onto latency evaluation, I will also look at how FlyTrap performs with many simultaneous connections. 100/1000/10000 clients sending a single PUBLISH packet will be initiated and their response times captured. 
-    \item[Cost Evaluation] To test the cost, Ganache testing network will be used. Six operations will be performed 100 times, exposing operation's cost in Gas. Then, those prices will be averaged and translated into USD for a clearer overview.
-    \item[Scenarios Evaluation] Finally, to test the requirements, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software.
-\end{description}
+\subsubsection{Latency Evaluation} To test the performance impact, I will run the same MQTT client that was written for the purposes of this project. For first test pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, I will measure time taken between sending initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurements is taken, FlyTrap is restarted and thus erasing all in-memory cache. For the fourth measurement, FlyTrap will not be restarted (further referred as ``Flytrap-Cached'') to take into account performance gains caused by caching. Everything will also be repeated with TLS both enabled and disabled to measure the impact of having to encrypt/decrypt TLS packets twice.
+\subsubsection{Scalability Evaluation}
+Latency evaluation would not be sufficient on its own to confirm FlyTrap's usability. It could be the case that singular client publishing messages is handled almost with no time loss, but as the number of clients increases (which is common for MQTT brokers to handle lot of clients at once), the response time might be growing exponentially and thus software being unusable for commercial purposes. 
+
+Adding onto latency evaluation, I will also look at how FlyTrap performs with many simultaneous connections. 100/1000/10000 clients (where number of concurrent clients is the experiment's independent variable and average response time is the dependent variable) sending a single PUBLISH packet (with the same size for every client) will be initiated and their response times captured. Then response time for each test will be averaged and placed on a chart to determine the growth speed.  
+\subsubsection{Cost Evaluation}
+To test the cost, Ganache testing network will be used, as it accurately simulates real Ethereum networks. Different operations performed by FlyTrap will be considered as independent variables:
+\begin{enumerate}
+  \item Creating a new contract
+  \item Creating a new topic
+  \item Adding a new publisher/subscriber
+  \item Revoking a publisher/subscriber
+\end{enumerate}
+As the gas cost can vary, each of those operations will be executed 100 times saving their cost in Gas (as reported by Ganache), every time using a fresh blockchain instance. Then, those prices (which would be the dependent variable) will be averaged and translated into USD for a clearer overview.
+\subsubsection{Scenarios Evaluation}
+Finally, to test the requirements satisfaction, scenarios described in chapter 3 of this dissertation will be used. A walk-through of the process will be included to pinpoint the benefits provided by the produced software and show how the problem presented by the use-case has been addressed..
 
 \subsection{Testing environment}
 Tests were performed on the University-provided hardware, with the specs as below:
 \subsubsection{Hardware}
-For tests, virtual machine provided by the University has been used. Throughout the test, the current activity on the machine will be monitored through `top' utility to ensure that no other program might influence the response times. Additionally, to avoid potential slowdowns with caching, each test will have 5 warm-up requests, which will be discarded from the evaluation, followed by 100 experimental measurements.
+For tests, virtual machine provided by the University has been used. Throughout the test, the current activity on the machine was monitored through `top' utility to ensure that no other program might influence the response times. Additionally, to avoid potential slowdowns with caching, each test will have 5 warm-up requests, which will be discarded from the evaluation, followed by experimental measurements.
 
 Table \ref{tab:hw} shows full specification of the hardware used for running the tests:
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{|l|l|}
 \hline
@@ -45,7 +55,7 @@ RAM                & 70 GB                            \\ \hline
 \subsubsection{Software}
 As network latency can be unpredictable and varied, all required software and frameworks have been locally installed in the machine, with FlyTrap communicating via local TCP ports. This also includes local instances for both MQTT broker and Ethereum node. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. In table \ref{tab:sw} you can find a list of specific software used for tests:
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{|l|l|}
 \hline
@@ -63,31 +73,14 @@ All source code from the project was compiled into binaries before execution to 
 \section{Latency Evaluation}
 For this test we will be looking at comparing FlyTrap's performance against state-of-the-art, which in this situation would be plain MQTT Broker offering authentication through username/password. This test will provide two separate sets of results, each executed on a connection with either TLS enabled or disabled.
 
-Furthermore, as mentioned above, each packet was submitted 105 times, discarding the first 5 results. Then for each scenario, average is calculated and placed on a bar chart. Additionally, to ensure statistical significance a two-tailed t-test has been performed on CONNECT tests to extract p-value. For SUBSCRIBE/PUBLISH - as we are dealing with three data groups - Kruskal-Wallis Test (since data is not of a Gaussian distribution, thus cannot use One-Way ANOVA Test) has been used to determine whether null hypothesis can be rejected
+Furthermore, as mentioned above, each packet was submitted 105 times, discarding the first 5 results. Then for each scenario, average is calculated and placed on a bar chart. Additionally, to ensure statistical significance a two-tailed t-test has been performed on CONNECT tests to extract p-value. For SUBSCRIBE/PUBLISH - as we are dealing with three data groups - Kruskal-Wallis Test (since data is not of a Gaussian distribution, thus cannot use One-Way ANOVA Test) has been used to determine whether null hypothesis can be rejected.
 
-Note: as no caching occurs during CONNECT stage, ``FlyTrap - Stacked'' has been omitted, as it produces the same results as regular `FlyTrap'
-\subsection{Plain TCP}
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{latency_notls}
-    \caption{Response times of most common MQTT requests on plain TCP connection}
-    \label{fig:latency_notls}
-\end{figure}
-
-\begin{table}[]
-\centering
-\begin{tabular}{|l|l|l|l|}
-\hline
-\textbf{\#} & \textbf{Test Data}                       & \textbf{Performed Test} & \textbf{p-value}                      \\ \hline
-1           & CONNECT: Vanilla vs FlyTrap              & Two Tailed T-Test       & $8.60*10^{-20}$                    \\ \hline
-2           & SUBSCRIBE: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
-3           & PUBLISH: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
-\end{tabular}
-\caption{Outcome of statistical tests on each the MQTT packets considered on plain TCP connection}
-\label{tab:ttest-notls}
-\end{table}
+Note: as no caching occurs during CONNECT stage, ``FlyTrap - Cached'' has been omitted, as it produces the same results as regular `FlyTrap'
 
 \subsection{With TLS}
+Figure \ref{fig:latency_tls} shows the average response time for each of the packets. Standard error has been omitted from the representation, as for each of the scenarios, it was found to be less than $0.01\%$. When sending the request through FlyTrap, we can notice an increase in response time of $53.73\%/61.92\%/62.67\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets.
+
+For FlyTrap - Cached, when compared with Vanilla, this increase is significantly less prominent, showing an increase of $18.12\%/22.19\%$ respectively for SUBSCRIBE/PUBLISH packets. 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{latency_tls}
@@ -95,26 +88,53 @@ Note: as no caching occurs during CONNECT stage, ``FlyTrap - Stacked'' has been 
     \label{fig:latency_tls}
 \end{figure}
 
-Statistical tests have been performed on all three datasets. Each of the 100 results for every packet has been compared with the counterpart, for example 100 CONNECT reponse times via Vanilla Broker vs 100 CONNECT reponse times via FlyTrap. This allows us to reject the null hypothesis, as for first test the \textit{p-value} is $<0.05$. Tests number 2. and 3. resulted with \textit{p-value}=0, which can be interpreted as significantly lower than 0.001.
+Statistical tests have been performed on all three datasets. Each of the 100 results for every packet has been compared with the counterpart, for example 100 CONNECT reponse times via Vanilla Broker vs 100 CONNECT reponse times via FlyTrap. This allows us to reject the null hypothesis, as for first test the \textit{p-value} is $<0.05$. Tests number 2.\ and 3.\ resulted with \textit{p-value} $=0$, which can be interpreted as significantly lower than 0.001.
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{|l|l|l|l|}
 \hline
 \textbf{\#} & \textbf{Test Data}                       & \textbf{Performed Test} & \textbf{p-value}                      \\ \hline
 1           & CONNECT: Vanilla vs FlyTrap              & Two Tailed T-Test       & $2.16*10^{-69}$                    \\ \hline
-2           & SUBSCRIBE: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
-3           & PUBLISH: Vanilla vs FlyTrap vs Stacked & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+2           & SUBSCRIBE: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+3           & PUBLISH: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
 \caption{Outcome of statistical tests on each the MQTT packets considered for TLS-encrypted connection}
 \label{tab:ttest-tls}
 \end{table}
+\subsection{Plain TCP}
+
+Test above has been repeated, this time disabling TLS encryption for both ends of the connection. First thing that we can notice is the overall decrease of response times, when compared with TLS connection. This is a clear indicator that TLS indeed adds an overhead to standard TCP connections. Experiment results were placed on a barchart in a similar manner as before. Again, standard error bars were omitted, as they were found to be less than $0.01\%$.
+
+Figure \ref{fig:latency_notls} shows the average response time for each of the packets. When sending the request through FlyTrap, we notice an increase in response time of $18.13\%/43.30\%/31.58\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets. For FlyTrap - Cached, when compared with Vanilla, this increase less prominent, showing an increase of $23.41\%/15.55\%$ respectively for SUBSCRIBE/PUBLISH packets. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{latency_notls}
+    \caption{Response times of most common MQTT requests on plain TCP connection}
+    \label{fig:latency_notls}
+\end{figure}
+
+In order to deem the results statistically significant, I performed identical tests as in TLS-focused experiment. For each of the tests, the \textit{p-value} was found to be $<0.05$ thus allowing me reject the null hypotheses. Table\ \ref{tab:ttest-notls} shows the specific values of performed statistical tests.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{\#} & \textbf{Test Data}                       & \textbf{Performed Test} & \textbf{p-value}                      \\ \hline
+1           & CONNECT: Vanilla vs FlyTrap              & Two Tailed T-Test       & $8.60*10^{-20}$                    \\ \hline
+2           & SUBSCRIBE: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+3           & PUBLISH: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
+\end{tabular}
+\caption{Outcome of statistical tests on each the MQTT packets considered on plain TCP connection}
+\label{tab:ttest-notls}
+\end{table}
+
 
 \section{Scalability Evaluation}
 To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message through FlyTrap with TLS enabled. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. See figure \ref{fig:scale} with the outcome. 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{scale}
+    \includegraphics[width=0.85\textwidth]{scale}
     \caption{Average response times with regards to number of concurrent clients}
     \label{fig:scale}
 \end{figure}
@@ -194,7 +214,7 @@ Here we are just looking at verifying who can access particular resource, as we 
 \end{figure}
 \section{Results}
 \subsection{Latency Evaluation}
-The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Stacked'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
+The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Cached'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
 
 For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement and concludes the first research question.
 \subsection{Scalability Evaluation}
