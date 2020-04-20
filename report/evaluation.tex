@@ -131,18 +131,18 @@ In order to deem the results statistically significant, I performed identical te
 
 
 \section{Scalability Evaluation}
-To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message through FlyTrap with TLS enabled. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. See figure \ref{fig:scale} with the outcome. 
+To perform this test, 100/1000/10000 concurrent clients will be dispatched to PUBLISH a single message, with identical size across all tests, through FlyTrap with TLS enabled. Every client will be dispatched at the same time, as a separate process, thus ensuring that they do not interfere with each other. Each will be identifying with a different Public Key, forcing FlyTrap to perform authentication flow. Then, time when PUBACK has been received will be captured and saved.
+
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.85\textwidth]{scale}
+    \includegraphics[width=0.8\textwidth]{scale}
     \caption{Average response times with regards to number of concurrent clients}
     \label{fig:scale}
 \end{figure}
+See figure \ref{fig:scale} with the outcome. We can see that the response time remains constant across a different number of concurrent clients, with less than $1\%$ change between tests.
 
 \section{Cost Evaluation}
 As mentioned, Proof-of-Authority networks do not have any currency involved and thus there is no reward for mining. But this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments and it's important to keep this cost to the minimum.
-
-Six operations performed by FlyTrap were executed a hundred times to extract the average costs in gas. To put those numbers into a perspective, I have also included the equivalent value in USD - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}
 
 \begin{figure}[h]
     \centering
@@ -150,6 +150,9 @@ Six operations performed by FlyTrap were executed a hundred times to extract the
     \caption{Cost comparison of various operations on blockchain}
     \label{fig:cost}
 \end{figure}
+
+Six operations performed by FlyTrap were executed a hundred times to extract the average costs in gas. To put those numbers into a perspective, I have also included the equivalent value in USD - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}
+
 
 \section{Scenarios Evaluation}
 In the last test for the evaluation we will be looking at verifying whether the produced software meets the defined requirements in chapter 3. This will focus mostly on a walk-through each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the user story.
@@ -217,9 +220,15 @@ Here we are just looking at verifying who can access particular resource, as we 
 The added overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Cached'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order minimising the impact for clients often connecting to the broker. As expected - we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
 
 For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement and concludes the first research question.
+
+It is also interesting to see that the increased latency is much bigger in TLS connections, when compared to TCP. With TLS, not only we have to deal with an extra overhead of having to contact blockchain to read authentication data, but also perform TLS encryption/decryption twice - first time when communicating with the client and the second time when communicating with the broker.
 \subsection{Scalability Evaluation}
 On the tested machine, the response times remained constant, indicating that the proxy is capable of handling many concurrent clients without significant impact on performance. If desired, multiple FlyTrap instances can also be deployed across many machines - each pointing to the same broker, further enhacing the response times. This concludes the second research question.
+
+It is important to note that FlyTrap will have an overall limit of maximum allowed concurrent connections of 65535 (equal to $2^{16}$) This is enforced by two limitations. First, MQTT Protocol can only accept Client IDs of at most $2^{16}$ characters long, so naturally it won't be able to proxy more connections than that, since Broker would staright up refuse them. Secondly, FlyTrap operates on linux TCP ports. And again, allowed port range only goes up to 65535. Where the latter problem could be fixed with WebSockets (discussed in the next chapter), the former would still remain a limitation.
 \subsection{Cost Evaluation}
 For the cost evaluation, the most expensive operation would be creation of the new contract, coming down to \$2.03. Contract contains the bare-bone definition of structures used by FlyTrap, so high price was expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would be also performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales linearly and cost remains the same, regardless the current size of the contract and amount of pre-existing topics/publishers/subscribers.
+
+Blockchain offers a solution with 100\% uptime - and at the same time allowing for potential monetisation of accessing the data. The average cost is significantly higher, when compared to centralised solutions, such as SQL server hosted in cloud - but it lacks the benefits of a distributed ledger. Ultimately, all pros and cons would need to be considered before making a decision to utilise Ethereum as a data layer.
 \subsection{Scenario Evaluation}
-By walking through each of the scenarios, I was able to prove that the software fulfills the business need specified at the beginning of this paper. Evaluation of Scenario \#4 and Scenario \#5 was omitted, as they concern one of the core features. Please refer to the User Manual for an explanation on how to set a cost on addining new publishers or subscribers.
+By walking through each of the scenarios, I was able to prove that the software fulfills the business need specified at the beginning of this paper. Scenario's \#4 use-case has been shown to be satisfied through the previous examples, as bare security benefit is considered. For the Scenario \#5, please refer to the User Manual for an explanation on how to set a cost on addining new publishers or subscribers.
