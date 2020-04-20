@@ -26,7 +26,7 @@ var (
 	verbose     = flag.Bool("v", false, "Enable verbose mode")
 	country     = flag.String("country", "GB", "topic will only be accessible to people connecting from this country. 2 letter ISO code.")
 	pubCost     = flag.Int64("pub_cost", 0, "cost of adding as publisher in wei")
-	subCost     = flag.Int64("pub_cost", 0, "cost of adding as subscriber in wei")
+	subCost     = flag.Int64("sub_cost", 0, "cost of adding as subscriber in wei")
 	sensitive   = flag.Bool("s", true, "whether new topic is to be marked as sensitive")
 )
 

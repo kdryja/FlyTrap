@@ -1,6 +1,26 @@
 \chapter{Maintenance Manual}
+% This appendix will provide information on how to compile and interpret source code of this project.
 \section{Prerequisites}
+To bring the whole framework up, three elements will be needed:
+\begin{itemize}
+  \item Golang - to compile (or run) all source files. All third-party Golang packages required by this project are managed through Go Modules\footnote{https://blog.golang.org/using-go-modules}, so there is no further action needed. Upon compilation, Go runtime will download all requirements and place them in your \$PATH (provided you have successfully installed Go). If desired, they can be manually inspected in `go.mod' file in project's root.
+  \item Blockchain Node - either a dummy one provided by Ganache or a live node started through Geth. Remote nodes are also accepted.
+  \item MQTT Broker - either a local broker (e.g. mosquitto on Ubuntu) or an online broker, reachable via TCP/TLS (e.g. test.mosquitto.org)
+\end{itemize}
 \section{Compiling source code}
+Project consists of 4 binaries, which can be compiled as follows. Each `go build foo.bar' operation will produce a binary named `bar', which then can be executed by running \$ ./bar. To specify exact name of the produced binary, an extra -o flag can be provided. Note, compilation is optional and all sourcecode can be also interpreted by the runtime, this can be achieved by replacing `go build' with `go run'.
+
+See below on how to compile binaries for each of the modules:
+\begin{lstlisting}[language=bash,breaklines=true]
+# compile blockchain CLI 
+$ go build -o blockchain blockchain/cmd/blockchain/main.go 
+# compile flytrap
+$ go build -o flytrap flytrap/cmd/flytrap/main.go
+# compile mqttclient 
+$ go build -o mqttclient mqttclient/client.go
+# compile webapp. note, 'templates' folder has to be adjacent to the produced binary when it is executed 
+$ go build -o webapp webapp/main.go 
+\end{lstlisting}
 \section{Project file tree}
 \begin{forest}
   for tree={font=\sffamily, grow'=0,
@@ -57,6 +77,4 @@ This module is used to start up a frontend instance for FlyTrap allowing inspect
 \paragraph{templates} HTML + JS files used to render the website.
 \paragraph{main.go *} backend used to handle incoming requests and query blockchain, returning information filling the website.
 \subsection{evaluation}
-This folder contains dump of all tests performed for the purposes of evaluation.
-\section{Constants and environmental variables}
-Mos
+This folder contains dump of all tests results performed for the purposes of evaluation.

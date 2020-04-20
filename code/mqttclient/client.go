@@ -36,7 +36,7 @@ var (
 	privLocation = flag.String("priv", "privkey1.asc", "Location of your private key file")
 	forceSign    = flag.Bool("f", false, "Whether to force recomputation of signature")
 	serverCrt    = flag.String("crt", "flytrap.crt", "location of cert for SSL/TLS connection")
-	connTest     = flag.Bool("conn_test", false, "whether to only connect and then immediately disconne")
+	connTest     = flag.Bool("conn_test", false, "whether to only connect and then immediately disconnect")
 )
 
 func con(ip string) net.Conn {
