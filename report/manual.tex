@@ -1,14 +1,19 @@
 \chapter{User Manual}
 This appendix will provide instructions on how to bring the proxy up and how to operate each of the project's modules.
 \section{Blockchain}
-For simplicity, this guide will be using Blockchain network created through Ganache. It is not essential and any other Ethereum node can be used, which can be accessible via TCP connection.
+For simplicity, this guide will be using Blockchain network created through Ganache. It is not essential and any other Ethereum node can be used, which should be accessible via TCP connection.
 
-To install Ganache, please follow instructions on https://www.trufflesuite.com/ganache to download AppImage and execute it from command line. This should bring up interface similar to \ref{fig:ganache}. Take note of the top two accounts, we will be using them in further examples.
+To install Ganache, please follow instructions on https://www.trufflesuite.com/ganache to download AppImage and execute it from command line, like shown in listing \ref{cap:gan}. This should bring up interface similar as shown on figure \ref{fig:ganache}. Take note of the top two accounts, we will be using them in further examples.
+
+\begin{lstlisting}[language=bash,breaklines=true,label={cap:gan},caption={Launching Ganache}]
+$ chmod +x ganache-2.3.1-linux-x86_64.AppImage
+$ ./ganache-2.3.1-linux-x86_64.AppImage
+\end{lstlisting}
 
 You can click on the key icon on the far right in order to retrieve account's private key. I recommend saving the first one as `privkey.asc' and the second one as `clientPriv.asc'. Those will be our private keys used in further examples.
 \section{MQTT Broker}
 We will be using HiveMQ test broker located under broker.hivemq.com:1883, so you don't need a local instance on your machine. HiveMQ doesn't support TLS connections, so all examples will have tls flag set to false, though if desired, it can be set to true, as long as the target support TLS and provides a certificate.
-\section{Command line parameters}
+\section{Parameters}
 \subsection{Common env variables}\label{sec:envvars}
 FlyTrap and Blockchain CLI makes use of two environmental variables. It is very important to set them before performing any action:
 \begin{description}
