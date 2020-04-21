@@ -2,14 +2,22 @@
 In this chapter I will conclude the work conducted in this paper, reflect back onto the results and suggest the next steps for the designed framework. I will also overview my achievements, slowdowns and difficulties found.
 
 \section{Conclusion}
-In this paper I have introduced a novel method of authenticating clients connecting to arbitrary MQTT Brokers through a middleware framework storing persistent information on Ethereum blockchain, allowing for higher transparency and availability. I have started by providing a motivation for the project, bringing up that standard MQTT protocol offers only limited authentication methods, with no option to log audit trails. Recent legislature requiring data administrators to adhere to specific set of rules dictating how the data should be stored, maintained and erased if requested was also discussed.
+In this dissertation, I have introduced a novel method of authenticating clients connecting to arbitrary MQTT Brokers through a middleware framework storing persistent information on Ethereum blockchain, allowing for higher transparency and availability. I have started by providing a motivation for the project, bringing up that standard MQTT protocol offers only limited authentication methods, with no option to log audit trails. Recent legislature requiring data administrators to adhere to specific set of rules dictating how the data should be stored, maintained and erased if requested was also discussed.
 
-As the project was concerning a lot of sophisticated software such as MQTT or Blockchain, a thorough background chapter was included in order to allow the reader to better understand the concepts and decisions taken throughout this thesis.
+As the project was concerning a lot of sophisticated software such as MQTT or Blockchain, a thorough background chapter was included in order to allow the reader to better understand the concepts and decisions taken throughout this thesis. An overview of related papers has also been included to make sure that my efforts were not duplicating any similar research.
+
+Before discussing the design of the framework, I explored and listed requirements for the project formulated as user stories, scenarios and list of functional- and nonfunctional requirements. Next, I proceeded with presenting a proposed architecture for FlyTrap, splitting it into four, independent modules: proxy, client, webapp and blockchain - each capable of working on its own. I've discussed data model stored on Blockchain and how access to sensitive topics is contiouosly logged to allow tracking back entities reading the data.
+
+Then I went on to talk about the implementation details, discussing the workflows that I have been following, my testing strategy and how my development environment looked like. In particular, simulating both MQTT Broker and Blockchain posed a challenge, as both are somewhat sophisticated frameworks often requring many modules to function properly.
+
+Finally, I designed an experiments aiming to evaluate FlyTrap's feasibility, how severe the performance hit was, whether the software is capable of scaling up as number of concurrent clients might go up, cost of operating on Proof-of-Stake blockchain network and reflected back to scenarios to determine whether specified requirements have been met. The increased response time through FlyTrap ranged from $18.12\%$ to $62.67\%$ when compared to vanilla broker. FlyTrap was also found to scale effortlessly, with almost no loss as number of clients have been increasing. Then, operational cost included a one-off payment of circa \$2.03, with usual costs of circa \$0.11 per operation.
+
+Detailed User Manual and Maintenance Manual have also been included as appendices, to outline how to set up your own proxy and how to read the source code created in this project.
 
 \section{Discussion}
 
 \subsection{Proof-of-Stake vs Proof-of-Authority}
-When I first introduced conecpt of blockchain in this paper, I discussed the differences between proof-of-stake and proof-of-authority consensus algorithms. As a reminder, Proof-of-Stake involves mining rewards for adding new blocks to the chain (thus involves currency) and is currently used for the public Ethereum network, whereas Proof-of-Authority doesn't involve any rewards and all blocks are verified by a set of ``sealers'' whose job is to verify whether they can be processed or not.
+When I first introduced concept of blockchain in this paper, I discussed the differences between proof-of-stake and proof-of-authority consensus algorithms. As a reminder, Proof-of-Stake involves mining rewards for adding new blocks to the chain (thus involves currency) and is currently used for the public Ethereum network, whereas Proof-of-Authority doesn't involve any rewards and all blocks are verified by a set of ``sealers'' whose job is to verify whether they can be processed or not.
 
 \begin{figure}[h]
     \centering
@@ -19,7 +27,7 @@ When I first introduced conecpt of blockchain in this paper, I discussed the dif
 \end{figure}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\textwidth]{blockchain_poa}
+    \includegraphics[width=0.75\textwidth]{blockchain_poa}
     \caption{Private Proof-of-Authority network}
     \label{fig:blockchain_poa}
 \end{figure}
@@ -29,19 +37,25 @@ Figures \ref{fig:blockchain_pos} \& \ref{fig:blockchain_poa} illustrate those di
 Let's first look at Proof-of-Stake. This includes all benefits coming from blockchain architecture.  That is, the entire layer is decentralised, meaning that hardware failure will not cause data loss, as every participant will be holding a copy. This ensures a true 100\% uptime of data layer. Moreover, all transactions are transparent and immutable. Nobody can deny submitting it or alter the past by removing some blocks from the chain (which is not even possible to begin with) - perhaps this would be the most beneficial by authorities and law enforcement organisations, which no longer have to trust data provided by the company, as they are able to host their own node and read stored data.
 
 \subsection{Comparison with State-of-the-Art}
-
+Both IoT and Blockchain are still developing technologies, which only recently gained traction in the industry. Lack of similar solution forced me to look beyond the original scope of the project to look into a papers which were also combining those two concepts. Because of that, state-of-the-art comparison involves only the un-changed MQTT Broker. I was satisfied to see only minor increase, whilst providing the extra security capabilities.
 \section{Reflection}
-
+This section will reflect back on the challenges that I faced when working on this project. I will also outline things that went exceptionally well and things that didn't go as planned.
 \subsection{Achievements}
+Before deciding to work on this particular topic, I had no knowledge of MQTT or Blockchain. I only briefly heard about such technologies, but never had a chance to apply them in any of my projects. Arguably, majority of time working on this dissertation was spent on background research and learning how to bring up my own Ethereum network, research industry trends and conduct a thorough evaluation to assess my solution.
 
+I am also happy to say that I successfully followed my original project plan, only with minor deviations. At no point I was facing pressure or closing on deadlines, always leaving an extra week or two as an emergency in case things did not go as expected.
+
+Writing such long documentation was also always a challenge for me, so I am very proud that I was able to stay in my persistence and finalise this project prior to the end of my undergraduate studies. 
 
 \subsection{Difficulties \& lessons learnt}
-When starting to plan this project at the end of the last year, I would never anticipate that I would have to conduct it in circumstances like that. I have to admit, working on my project fully remotely has been a big challenge which made me appreciate face-to-face teaching even more. As much as my online meetings were going smoothly and without problems,
+When starting to plan this project at the end of the last year, I would never anticipate that I would have to conduct it in circumstances of a worldwide lockdown. I have to admit, working on my project fully remotely has been a big challenge which made me appreciate face-to-face teaching \& guidance even more. As much as my online meetings were going smoothly and without problems, I started to miss the whiteboarding in my supervisor's office - which were invaluable during brainstorming.
 
-As I planned my risk management when writing the project plan, I didn't take global pandemic into an account - and I don't think that anyone did. With remote work
+As I planned my risk management when writing the project plan, I didn't take global pandemic into an account - and I don't think that anyone did. With remote work, I lost the benefit of networking with my peers and discussing our ideas, which provided an immense help before. We were able to overcome this challenge by organising a weekly remote meetup through videoconferencing to carry on, as we knew that the help that we can offer each other is invaluable.
+
+I also learned to always ask for help if faced with a roadblock for an extended time. For example, at one point I encountered a problem, where my software was no longer capable of handling concurrent clients. I spent roughly 2 days dissecting my code line by line, to determine the root cause and eventually pinpointed it to the fact that Client ID field needs to be unique for the broker to respond. When discussed it with one of my co-supervisors, I learned that he also faced similar problem in the past and also got stuck for couple of days. If I approached him earlier, I could have saved those two days.
 
 \section{Future Work}
-
+This section will outline the possible future for FlyTrap and how it could be brought forward with further enhacements to the provided security.
 \subsection{Testing TLS}
 Following up from the evaluation chapter, we deduced a significantly increased performance loss when proxing TLS connections from Client towards FlyTrap and then from FlyTrap to MQTT Broker. Further testing could be needed to determine whether the impact is greater on \mbox{Client<->FlyTrap} or FlyTrap<->Broker side and provide appropriate guidance on how to provide the best possible performance.
 
