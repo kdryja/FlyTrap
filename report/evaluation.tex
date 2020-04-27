@@ -7,9 +7,9 @@ This section will include details on how the experiments were designed and what 
 I will be looking at evaluating four separate aspects of the implementation and thus can form four research questions, which each of the subsequent sections will attempt to answer:
 \begin{enumerate}
   \item How significant is the performance hit by proxying the connection through FlyTrap, as opposed to directly connecting to the broker (further referred to as state-of-the-art)?
-  \item How does FlyTrap's proxy scale as the number of concurrent connections goes up?
+  \item How does FlyTrap scale as the number of concurrent requests goes up?
   \item How expensive would the operation of FlyTrap be on Proof-of-Stake type of blockchain network?
-  \item Does the software fulfil the specified requirements?
+  \item How does FlyTrap address the problems stated by use-case scenarios in Section \ref{sec:usecase}?
 \end{enumerate}
 \subsection{Experiments}
 Each of the questions specified above will have its own designated test.
@@ -229,6 +229,6 @@ It is important to note that FlyTrap will have an overall limit of maximum allow
 \subsection{Cost Evaluation}
 For the cost evaluation, the most expensive operation would be the creation of the new contract, coming down to \$2.03. The contract contains the bare-bones definition of structures used by FlyTrap, so high price was to be expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would also be performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales linearly, and cost remains the same, regardless of the current size of the contract and amount of pre-existing topics/publishers/subscribers.
 
-Blockchain offers a solution with 100\% uptime - and at the same time allowing for potential monetisation of accessing the data. The average cost is significantly higher, when compared to centralised solutions, such as SQL server hosted in the cloud - but it lacks the benefits of a distributed ledger. Ultimately, all pros and cons would need to be considered before deciding to utilise Ethereum as a data layer.
+Blockchain offers a solution with 100\% uptime - and at the same time allowing for potential monetisation of accessing the data. The average cost is significantly higher, when compared to centralised solutions, such as SQL server hosted in the cloud - but it lacks the benefits of a distributed ledger. Ultimately, all pros and cons would need to be considered before deciding to utilise Ethereum as a data layer. This concludes the third research question.
 \subsection{Scenario Evaluation}
-By walking through each of the scenarios, I was able to prove that the software fulfils the business need specified at the beginning of this paper. The use-case of Scenarios \#4 has been shown to be satisfied through the previous examples, as bare security benefit is considered. For the Scenario \#5, please refer to the User Manual for an explanation on how to set a cost on adding new publishers or subscribers.
+By walking through each of the scenarios, I was able to prove that the software fulfils the business needs specified in Section \ref{sec:usecase}, answering the fourth research question. The use-case of Scenarios \#4 has been shown to be satisfied through the previous examples, as bare security benefit is considered. For the Scenario \#5, please refer to the User Manual (Appendinx~\ref{cha:manual}) for an explanation on how to set a cost on adding new publishers or subscribers.

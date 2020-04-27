@@ -191,6 +191,9 @@ To avoid memory filling too quickly (and eventually reaching the capabilities of
 \subsection{Interacting with blockchain}\label{sec:interact}
 As FlyTrap aims to be deployed on a publicly available blockchain, anyone can interact with the data (as long as they pay the requested fee or identify with the relevant owner's private key). For administrative operations, a simple CLI is also included, which can be called directly (not necessarily through FlyTrap) to perform administrative tasks, such as adding new topics or modifying topic restrictions.
 
+\subsection{Monetisation}
+One of the biggest novelties of this project is the possibility to monetise the data published on MQTT brokers. When creating a new topic, user interacting with the smart contract can specify cost associated with adding publishers or subscribers to the blockchain. Once set, any arbitrary person can add their own public key to the ACL - granted they have enough funds to cover the fees. Then, those fees are transferred back to the topic creator - which can be spend or exchanged for fiat currency. First revision of FlyTrap only allows to set fees on changing ACLs\footnote{Disregarding how often the data is being accessed or how much data is published.} - for the future it might be interesting to also consider different tiers for different access frequencies. 
+
 \section{Presentation Layer}
 This layer combines everything above in a front-end allowing users to inspect and interact with stored information. Similarly to section \ref{sec:interact}, this could also be read through any of the publicly available front-ends used to interact with Ethereum transactions, but to provide a complete package, the project will also ship with a simple website aiming to satisfy the requirements stated in Chapter 3.
 \subsection{Website}
