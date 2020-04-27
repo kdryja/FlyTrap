@@ -115,7 +115,15 @@ FlyTrap \\
 %%%% Then the abstract and acknowledgements
 
 \begin{abstract}
-  In this paper I present a novel approach introducing Authentication, Authorization and Accountability to MQTT Brokers. 
+  In this paper I present a novel approach introducing Authentication, Authorisation and Accountability to MQTT Brokers with the main target being IoT sensors. IoT (thus MQTT) and Blockchain are emerging technologies that are gaining popularity in a lot of industries due to their unique features and design, including potential 100\% uptime, transparent \& immutable transaction history and attached cryptocurrency opening doors for monetisation of data collected by the sensors.
+  
+  FlyTrap - introduced in this dissertation - is a framework that aims to combine distributed ledgers with MQTT protocol to enhance it with a middleware capable of improving the authentication and accountability - which at the moment is very limited with the standard implementation. It is composed of four independent layers: Blockchain Layer, Broker Layer, Presentation Layer and Client Layer - loosely coupled with each other. It upgrades the standard MQTT protocl with features such as: monetising data access, securing particular topics with public / private key pairs, persistent audit logging on blockchain, daily usage reports and fending off primitive denial-of-service type of attacks - all deployed on a distributed Ethereum network.
+  
+  Several evaluation scenarios were considered to determine how significant is the performance loss due to the extra layer of security, the total operational cost on the public blockchain and the potential to scale up with an increased number of connections. The performance loss was observed to be around 20\% (compared to vanilla MQTT Broker), cost of operations ranged from \$0.02 to \$2.10 and FlyTrap was having constant impact with increased number of connections, indicating great potential to scale up.
+  
+  At the end, the dissertation includes a discussion between proof-of-authority and proof-of-work networks, suggesting that the former might be more interesting for business more interested in data's secrecy than transparency and the latter for the opposite scenarios - where data transparency plays the biggest role. The project should also be followed up with an additional future work concerning the overall impact of TLS encryption, usage of WebSocket (as opposed to plain TCP/TLS) and looking into verification of devices authenticity.
+  
+  The paper is concluded with promising results, encouraging further testing \& usage, pointing out that the combination of the blockchain technologies with IoT might be able to provide robust architectures with distributed data layer and transparent transaction logs.
 \end{abstract}
 
 \begin{acknowledgements}
