@@ -520,6 +520,9 @@
     \vskip 40\p@%
     
     \noindent Signed:
+    \begin{figure}[h]
+    \includegraphics[width=0.4\textwidth]{signature}
+    \end{figure}
 
     \vskip 40\p@%
 
