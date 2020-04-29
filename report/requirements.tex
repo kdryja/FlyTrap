@@ -27,7 +27,7 @@ In addition to the functional, it is also vital to mention the following non-fun
 \item[\textbf{(NFR1)}] The system should provide \textbf{an overhead of no more than half a second} per MQTT session. This is important, as the intention is to provide an add-on on top of the existing MQTT brokers. This might further compromise the current efficiency, so the system should aim to minimise the added latency. 
 \item[\textbf{(NFR2)}] The system should be agnostic of the used MQTT broker, as long as the broker \textbf{fully implements the MQTT v5.0 standard}. As pointed out earlier, there is a variety of brokers available to use, such as Mosquitto or Moquette. FlyTrap should not rely on the implementation of a broker, but rather only on the standard utilised.
 \item[\textbf{(NFR3)}] The system should be capable of extending any MQTT broker with \textbf{Authentication, Authorisation, Accountability} framework. This is to ensure that data can only be accessed by authenticated entities, which are authorised to access requested resources - and in case of a breach or other disaster, keep them accountable to their actions.
-\item[\textbf{(NFR4)}] The system should only be based on \textbf{Free and Open-Source Software}. Since the ultimate aim is to provide increased security, keeping the source open would allow any potential users to inspect its operation. Furthermore, third party security audits can happen without the system owner's intervention.
+\item[\textbf{(NFR4)}] The system should only be based on \textbf{Open-Source Software}. Since the ultimate aim is to provide increased security, keeping the source open would allow any potential users to inspect its operation. Furthermore, third party security audits can happen without the system owner's intervention.
 \end{itemize}
 
 
@@ -57,6 +57,7 @@ The budget allows to issue up to 1000 sensors, and Robert would like to use the 
 
 \paragraph{\textbf{What problem is addressed here:}}
 Data containing personal information of European citizens needs to be handled in a GDPR compliant way. This cannot be ensured if the information is accessible outside EU, as there would be no jurisdiction or enforceability once the data leaves the region. The person responsible for data storage needs to ensure that no people outside EU can access it.
+\paragraph{\textbf{Relevant requirements:}} FR1, FR6, FR7, FR8.
 \\
 \subsubsection{Scenario \#2: Data breach in an oil drilling facility}
 \paragraph{\textbf{Scenario:}}
@@ -64,7 +65,8 @@ Bob is a Chief Information Technology in a company Chell handling processing of 
 
 Unfortunately, due to unrelated reasons, access to the broker has been compromised thus allowing third parties to peek into the data flowing through potentially. Bob is approached by Judy, who works with the team responsible to trace the severity of leakage and determine the potential scope \& damages. Judy asks Bob to outline who might have had access to the leaked information and what the leaked information contained. Judy also instructs Bob to inform all people and contractors that might have been affected by the breach.
 \paragraph{\textbf{What problem is addressed here:}}
-Companies that use MQTT brokers to store information which is confidential and contains trade secrets of high commercial value want to determine the range of leak that happened. This is part of disaster recovery procedure and is important for business continuity; i.e. determine how much of data has leaked and what kind of information was exposed to malicious actors. 
+Companies that use MQTT brokers to store information which is confidential and contains trade secrets of high commercial value want to determine the range of leak that happened. This is part of disaster recovery procedure and is important for business continuity; i.e. determine how much of data has leaked and what kind of information was exposed to malicious actors.
+\paragraph{\textbf{Relevant requirements:}} FR1, FR7.
 \\
 \subsubsection{Scenario \#3: Unsatisfied Customer}
 \paragraph{\textbf{Scenario:}}
@@ -73,6 +75,7 @@ Mary recently purchased a smart assistant, which comes with several smart sensor
 Matt knows that Moogle is using MQTT brokers to connect their smart sensors and then use the phone app to issue commands back to them through the broker. Although the phone app is not the only piece of software that has access to the data from the smart sensors. Analytics teams also consume those in order to help Moogle create better products. Those servers have their own data storage capabilities and replicate the data that they consume. Matt is now tasked with identifying which internal analysis services might have accessed Mary's sensors in order to erase this information since it is one of the GDPR requirements, also called "right to be forgotten".
 \paragraph{\textbf{What problem is addressed here:}}
 Again, GDPR comes into action here, in particular Article 17 - Right to erasure. Moogle needs to permanently erase all trail coming from Mary's sensors, that includes any analytics datasets. Since those services are using MQTT brokers, there is no access trail and without proper infrastructure, it is impossible to go in the past and track which services were accessing the data.
+\paragraph{\textbf{Relevant requirements:}} FR1, FR7.
 \\
 \subsubsection{Scenario \#4: Monetization of data}
 \paragraph{\textbf{Scenario:}}
@@ -81,6 +84,7 @@ Frank owns several farm fields in Scottish Highlands. As part of the ongoing dig
 He decided to connect all sensors to one MQTT broker for ease of access and started to consume the information through the provided mobile application. As the equipment was quite expensive, Frank would like to also sell access to the sensors to the interested parties, such as other land owners or University researchers looking to learn more about the soil quality in the area. No personal information is included, though the data is highly dependant on the location (which currently only Frank can access) and thus might be also useful for other people. 
 \paragraph{\textbf{What problem is addressed here:}}
 Selling data is a very lucrative business, especially if the data is valuable and has potential audience. MQTT does not have provisions to accommodate such requirements - anything like that would need to either be stored in some persistent location (and then processed for commercial purposes) or routed through an extra layer of verification.
+\paragraph{\textbf{Relevant requirements:}} FR1, FR3, FR4.
 \\
 \subsubsection{Scenario \#5: Securing access to the broker}
 Bob works for a start-up company contracted by the local council to deploy smart sensors across the city to measure various statistics, such as air quality, traffic intensity, parking spot occupancy. All of those sensors are connected to the MQTT broker, which later can also be accessed by third parties - providing they have a legitimate and approved reason. The MQTT broker is accessible by people that might not have overlapping permissions, for example company A can access only data set Y and company B can access only data set X - both X \& Y are published on the same MQTT broker.
@@ -88,4 +92,4 @@ Bob works for a start-up company contracted by the local council to deploy smart
 Bob is aware of the vanilla implementation of username/password authentication for MQTT brokers, but is concerned about the insufficient security in case of leakage. He also already is using Ethereum within the company to hold internal data, so can issue more wallets - if necessary.
 \paragraph{\textbf{What problem is addressed here:}}
 Security capabilities of vanilla MQTT Brokers can be found lackluster and not sufficient for many needs. Using symmetric password authentication can be very damaging if the said password leaks to third parties. For people that are already using related blockchain technologies, the transition to FlyTrap would be even simpler, as it can make use of any and every wallet compatible with ETH.
-
+\paragraph{\textbf{Relevant requirements:}} FR1, FR2, FR5.
