@@ -120,7 +120,7 @@ This section will walk you through how to use each of the modules to perform all
 \subsection{Blockchain}
 Operations described in this section will demonstrate how to manipulate and interact with FlyTrap's smart contract located on Ethereum. Before running any of those examples, make sure you have configured your env variables as per section \ref{sec:envvars}.
 
-\paragraph{IMPORTAT} Make sure privkey.asc is in the same directory from where you execute the go run commands.
+\paragraph{IMPORTANT} Make sure privkey.asc is in the same directory from where you execute the go run commands.
 \subsubsection{Creating a new contract}
 This operation will create a new contract on Blockchain and output its public key. Make sure your account has enough funds, as it might cost some gas.
 \begin{lstlisting}[language=bash,breaklines=true]
@@ -147,7 +147,7 @@ Similar to adding, with the only exception that pub/sub flag is changed to rpub/
 \subsection{FlyTrap}
 This section will explain how to bring up your own FlyTrap proxy and connect it to HiveMQ test broker.
 \subsubsection{Starting up FlyTrap}
-\paragraph{IMPORTAT} Make sure privkey.asc is in the same directory as FlyTrap and BLOCKCHAIN\_ADDRES \& FLYTRPAP\_CONTRACT environmental are set and active. You can verify it by running `\$ echo \$BLOCKCHAIN\_ADDRESS \$FLYTRAP\_CONTRACT'. If you can see both values output to the terminal, you are ready to go.
+\paragraph{IMPORTANT} Make sure privkey.asc is in the same directory as FlyTrap and BLOCKCHAIN\_ADDRES \& FLYTRPAP\_CONTRACT environmental are set and active. You can verify it by running `\$ echo \$BLOCKCHAIN\_ADDRESS \$FLYTRAP\_CONTRACT'. If you can see both values output to the terminal, you are ready to go.
 \begin{lstlisting}[language=bash,breaklines=true]
 $ echo $BLOCKCHAIN_ADDRESS $FLYTRAP_CONTRACT
 http://localhost:7545 0x61c4603936627946aAb47a86e135b983171eFF44
