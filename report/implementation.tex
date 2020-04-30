@@ -1,9 +1,9 @@
 \chapter{Implementation\label{chap:implementation}}
-This chapter is discussing the technical specifications of the project and discuss the decisions that affected the process. I will also overview my workflow and iterative approach to the project. Last but not least, I will include and credit a list of third-party libraries that this framework makes use of.
+This chapter is discussing the technical specifications of the project and discuss the decisions that affected the process. We also overview my workflow and iterative approach to the project. Last but not least, a credit a list of third-party libraries that this framework makes use of is also included.
 
 \section{Development process}
 
-In this section, I will outline how the work on my dissertation was conducted along with pointing out the pitfalls and making sure that the produced code remains fully functional.
+In this section, we outline how the work on my dissertation was conducted along with pointing out the pitfalls and making sure that the produced code remains fully functional.
 
 \subsection{Project plan}
 
@@ -26,7 +26,7 @@ Since I was following an agile workflow when working on the project, it was esse
 
 \section{Technologies}
 
-In this section, I will describe the technologies used in this project, that is, languages, frameworks, third-party libraries and different approaches when writing the code.
+In this section, we describe the technologies used in this project, that is, languages, frameworks, third-party libraries and different approaches when writing the code.
 
 \subsection{Languages used}
 
@@ -61,13 +61,13 @@ Following third party resources were utilised in the project. All of them includ
 \end{description}
 
 \subsection{Working with MQTT}
-As the project heavily relies on MQTT brokers, I had to look for a solution to simulate this environment on my machine. I had two  options, either run the broker locally or use one of the publicly available test brokers
+As the project heavily relies on MQTT brokers, we had to look for a solution to simulate this environment on my machine. We had two options, either run the broker locally or use one of the publicly available test brokers.
 \subsubsection{Online Broker}
 Both HiveMQ\footnote{https://www.hivemq.com/} and Mosquitto\footnote{https://test.mosquitto.org/} provide free, publicly available brokers capable of both TLS and plain TCP connections. Connecting FlyTrap to a live, online broker helped me test how the system would behave in a situation where FlyTrap and the broker are not located on the same machine and whether inter-network proxy works fine.
 \subsubsection{Local Broker}
-For maximised performance, local broker should be used, to minimise the latency of TCP/TLS connections. For that, I have used Mosquitto 1.6.9\footnote{https://mosquitto.org/blog/2020/02/version-1-6-9-released/}. I was also able to generate a new set of certificates and RSA public/private key pair for TLS connections\footnote{through `openssl' utility}.  
+For maximised performance, local broker should be used, to minimise the latency of TCP/TLS connections. For that, we have used Mosquitto 1.6.9\footnote{https://mosquitto.org/blog/2020/02/version-1-6-9-released/}. It is also possible to generate a new set of certificates and RSA public/private key pair for TLS connections\footnote{through `openssl' utility}.  
 \subsection{Working with Blockchain}
-Ethereum was to be used as a data layer for the application. Of course, testing on the public chain was unfeasible, due to the tremendous costs involved. Fortunately, Ethereum provides an easy way to start your own network, which would behave identically as the real one (including fake credits to use) - in the end, it would be indistinguishable from the real node for the applications attempting communication. When working on the project, I considered two ways of mocking (or replicating) the blockchain and in the end, made sure to test FlyTrap in both approaches:
+Ethereum was to be used as a data layer for the application. Of course, testing on the public chain was unfeasible, due to the tremendous costs involved. Fortunately, Ethereum provides an easy way to start your own network, which would behave identically as the real one (including fake credits to use) - in the end, it would be indistinguishable from the real node for the applications attempting communication. When working on the project, We considered two ways of replicating blockchain and in the end, made sure to test FlyTrap in both approaches:
 \subsubsection{Ganache}
 Ganache\cite{lee2019testing} is a framework designed for emulating Ethereum environment. It can be thought as a sandbox environment, where you can generate any required number of dummy accounts, preloaded with currency, which then can be used to transact with each other - all running on localhost, without the need of configuring a proper blockchain network. Extra blocks are mined automatically - as needed. It is also possible to dump the workspace into a file and check into version control.
 
@@ -80,7 +80,7 @@ Figure \ref{fig:ganache} shows how the user interface looks like. You can genera
 \end{figure}
 
 \subsubsection{Geth}
-Geth is an environment much closer to the real Ethereum node. In fact, it is used in many production environments to connect to Ethereum networks. Geth is also used in production environments to set up new networks or nodes. When testing my framework, I have set up a new Proof-of-Authority network, with only one node. Since I am in control of the network, I can configure all parameters, such as cost of gas (decreasing it down to 0), allowed accounts or speed of mining new blocks. This network is also indistinguishable from a public one, similar to Ganache. Geth can also be used to connect to live networks and start mining cryptocurrency on your workstation.
+Geth is an environment much closer to the real Ethereum node. In fact, it is used in many production environments to connect to Ethereum networks. Geth is also used in production environments to set up new networks or nodes. When testing my framework, we have set up a new Proof-of-Authority network, with only one node. Since we are in control of the network, we can configure all parameters, such as cost of gas (decreasing it down to 0), allowed accounts or speed of mining new blocks. This network is also indistinguishable from a public one, similar to Ganache. Geth can also be used to connect to live networks and start mining cryptocurrency on your workstation.
 %\subsection{Development tools}
 %\hl{optional, get back here if i still have some wordcount left}
 %\subsubsection{Version Control}
@@ -90,13 +90,13 @@ Geth is an environment much closer to the real Ethereum node. In fact, it is use
 Application involves a lot of configurable values, to ensure that the end-user finds their preferred combination of settings (such as TLS certs, ports - see User Manual for an overview of all possibilities). There are several ways to state constants and parameters when running any of the components:
 \begin{itemize}
     \item Command line parameters - to specify the environment when running the binaries.
-    \item Environmental Variables - alternative to command line parameters. FlyTrap will first inspect command line parameters and if not, will look for environmental variables defined by the host OS.
+    \item Environmental Variables - alternative to command line parameters. FlyTrap first inspects command line parameters and if not, looks for environmental variables defined by the host OS.
     \item Constants in the code - for some immutable values, that do not require intervention (though the option to change them remains documented).
     \item Website requests - for the web application that ships alongside the project, user can also specify fields such as contract address or which port Ethereum node is running under.
-    \item Static files at projects root - since FlyTrap requires some user-provided files (such as private keys or certificates), running the proxy will require providing a path to those files via one of the methods specified above.
+    \item Static files at projects root - since FlyTrap requires some user-provided files (such as private keys or certificates), running the proxy requiries providing a path to those files via one of the methods specified above.
 \end{itemize}
 \subsection{Logging}
 All significant operations on FlyTrap, Blockchain CLI and Web Backend are logged to standard error through log Golang module\footnote{https://golang.org/pkg/log/}. These logs are only produced for primary operations such as new connection or any actions resulting in writing to the blockchain.
 
-They are not persistent and will disappear upon restart. Users are free to implement their own redirection to local files if desired.
+They are not persistent and disappear upon restart. Users are free to implement their own redirection to local files if desired.
 
