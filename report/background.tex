@@ -88,7 +88,7 @@ After a successful connection, the client can proceed to send a request for subs
 
 Once the SUBSCRIBE message has been processed and approved by the broker, it will issue a SUBACK message and remain connected to the client. From this point, any message that is published on the topic specified in the SUBSCRIBE packet will be published (as a PUBLISH packet) to every client currently subscribed to it. Of course, depending on requested QoS, the broker might then await for a PUBACK message (or even issue other messages such as PUBREC, PUBREL, PUBCOM). Figure \ref{fig:mqtt_subscribe} demonstrates a simple exchange with QoS set to 1. 
 
-\begin{table}[]
+\begin{table}[h]
 \centering
 \begin{tabular}{llllllllllllll}
 \hline
