@@ -77,7 +77,7 @@ Furthermore, as mentioned above, each packet was submitted 105 times, discarding
 
 Note: as no caching occurs during CONNECT stage, ``FlyTrap - Cached'' has been omitted, as it produces the same results as regular `FlyTrap'
 
-\subsection{With TLS}
+\subsection{With TLS}\label{sec:tls_eval}
 Figure \ref{fig:latency_tls} shows the average response time for each of the packets. Standard error has been omitted from the representation, as for each of the scenarios, it was found to be less than $0.1\%$. When sending the request through FlyTrap, we can notice an increase in response time of $53.73\%/61.92\%/62.67\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets.
 
 For FlyTrap - Cached, when compared with Vanilla, this increase is significantly less prominent, showing an increase of $18.12\%/22.19\%$ respectively for SUBSCRIBE/PUBLISH packets. 
