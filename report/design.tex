@@ -139,13 +139,21 @@ In this layer, communication with the Ethereum node occurs. As described in the 
 \subsubsection{Data Model}
 The root of all communication with blockchain is a smart contract that contains all chain code responsible for retrieving and storing information required by FlyTrap. Each organisation or entity willing to use FlyTrap should configure and deploy a new contract, which would be tied to a singular owner (i.e., a private key). Ethereum's chain code execution can be limited to only a particular set of addresses, here most of the sensitive operations (such as adding new publishers or subscribers) are restricted to either an owner or payable ETH\footnote{Cryptocurrency used on Ethereum blockchains} (set by the owner) - if the requestor is not an owner.
 
-Then, each contract contains a single variable called ``topics'' which is a mapping (dictionary structure in Solidity, a programming language for Ethereum) from a string (name of the topic) to structure ``Topic'' where the metadata can be located, such as control lists. Every person can create their own topic on the contract, of which they would become the owner. The contract's owner can also request ETH payment (in addition to the network fees) from any people looking to create a new topic. Figure~\ref{fig:uml_topic} shows all fields used in FlyTrap's chain code placed on the blockchain, to explain further the usage and purpose of each of the fields:
+Then, each contract contains a single variable called ``topics'' which is a mapping (dictionary structure in Solidity, a programming language for Ethereum) from a string (name of the topic) to structure ``Topic'' where the metadata can be located, such as control lists. Every person can create their own topic on the contract, of which they would become the owner. The contract's owner can also request ETH payment (in addition to the network fees) from any people looking to create a new topic. Figure~\ref{fig:uml_topic} shows all fields used in FlyTrap's chain code placed on the blockchain, to explain further the usage and purpose of each of the fields - with Figure~\ref{fig:uml_topic_example} showing example values:
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{uml_topic}
     \caption{Topic structure stored on blockchain.}
     \label{fig:uml_topic}
 \end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{uml_topic_example}
+    \caption{Example values for a topic structure stored on blockchain. Note, "address(1|2|3|4)" refers to a public key, which is its own variable type in Solidity.}
+    \label{fig:uml_topic_example}
+\end{figure}
+
 \begin{description}
     \item[isValue] - in Solidity, it is not possible to determine whether the given key exists in the mapping, as every value points to some arbitrary address space. An extra field helps to mitigate this issue, e.g. to avoid overwriting existing topics with new data.
     \item[sensitive] - a bool flag the marking given topic as sensitive which enhances it with extra data reporting functionality outlined in Section \ref{sec:reports}.
@@ -159,10 +167,17 @@ Then, each contract contains a single variable called ``topics'' which is a mapp
 \end{description}
 
 Apart from the structure show in Figure\ref{fig:uml_topic} holding information inside the contract, events are also utilised. Event is a special structure used in Solidity, which attaches itself to the transaction log. Meaning that it is possible to append information such as a user-specified reason or timestamps to all operations. This is then encoded in Application Binary Interface (ABI)\footnote{Encoding type used in Solidity: https://solidity.readthedocs.io/en/latest/abi-spec.html} JSON and sent along with the transaction. Though, it is also possible to emit empty events solely for logging purposes \citep{dannen2017introducing}.  Figure \ref{fig:uml_event} outlines what each event consists of:
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{uml_event}
-    \caption{Event structure as stored in transaction log}
+    \caption{Event structure as stored in transaction log.}
+    \label{fig:uml_event}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{report/img/uml_event_example.pdf}
+    \caption{Example event log stored on Blockchain. It can be interpreted as follows: ``address1'' has added ``address2'' as a publisher to topic ``ExampleTopic1'' providing reason ``adding a new publisher''. This action modifies ``publishers'' mapping of ``ExampleTopic1'', by setting ``address2'' to true.}
     \label{fig:uml_event}
 \end{figure}
 
