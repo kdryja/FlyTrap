@@ -1,7 +1,7 @@
 \chapter{Implementation\label{chap:implementation}}
 This chapter is discussing the technical specifications of the project and discuss the decisions that affected the process. We also overview my workflow and iterative approach to the project. Last but not least, a credit a list of third-party libraries that this framework makes use of is also included.
 
-\section{Development process}
+\section{Development Process}
 
 In this section, we outline how the work on my dissertation was conducted along with pointing out the pitfalls and making sure that the produced code remains fully functional.
 
@@ -20,7 +20,7 @@ Figure \ref{fig:timeline} illustrates the timeline of the project, and all inclu
 
 When designing my project plan, I distributed the workload into small work chunks and features which would be implemented in an iterative manner. I was following agile methodologies, dedicating each week to a different feature, where I would go through the entire development cycle for each unit. For example, generating the reports (section 4.4.2) was first introduced during a meeting with my supervisor, where I would establish the requirements and success criteria for this particular story (following definition of stories in agile approach). Then I would spend a day or two designing the flow and functionality, followed by an extra two days implementing the designed features. At the very end, I would conduct testing and regression testing to make sure that the rest of the project still remains operational. This would be concluded with a meeting with my supervisor to reflect on the sprint and determine whether success criteria were met.
 
-\subsection{Regression testing}
+\subsection{Regression Testing}
 
 Since I was following an agile workflow when working on the project, it was essential to ensure that none of the `stories' (or, tasks) affected each other when completed. Otherwise, I could have found myself in a situation where working on the reporting of the events to the blockchain might have broken another, unrelated feature, e.g. verifying the authenticity of connecting clients. That is the reason behind keeping regression testing as a vital phase of development. I was able to achieve it through continuous, automated testing - which includes unit, integration, regression and manual testing.
 
@@ -28,7 +28,7 @@ Since I was following an agile workflow when working on the project, it was esse
 
 In this section, we describe the technologies used in this project, that is, languages, frameworks, third-party libraries and different approaches when writing the code.
 
-\subsection{Languages used}
+\subsection{Languages Used}
 
 The following programming languages have been used in this project:
 \begin{itemize}
@@ -47,11 +47,11 @@ Go in the project was used to write the backend of the webserver, CLI to communi
 Solidity \cite{dannen2017introducing} is the language used to write smart-contracts in Ethereum, so it was a necessity. Its syntax is similar to Javascript, though it is statically, strongly typed. Go-ethereum includes a utility which translates Solidity code into Golang methods, which then can be used to make calls against the blockchain. There is no API which can be used to query/create transactions and rather developers need to use official SDKs published by the Ethereum team.
 \subsubsection{HTLM5 + CSS3 + JavaScript}
 Since the web application serves only as a presentation and demonstration, I decided against any complex JavaScript or TypeScript frameworks and rather opted for a simple solution consisting of plain HTML + CSS and JavaScript. The web app also includes a small backend; thus, asynchronous calls are performed from the client-side towards the server to fill the content tables dynamically.
-\subsubsection{Considered alternatives}
+\subsubsection{Considered Alternatives}
 Apart from Golang, I was also considering \textbf{Python} as a main driver for the project. The majority of my projects in the past included Python, and my familiarity was sufficient to avoid any roadblocks. Though, compared to Golang, there are several problems, which would be especially prominent in this project, one of them being Global Interpreter Lock\cite{beazley2010understanding} (or GIL for short), which effectively restricts the scope of possible multithreading.
 
 The choice was also dictated by a personal preference, as I wanted to apply the knowledge I gained over my year in industry during my final year at University. I believed that having a comparison on how a language performs in both industrial and academic environment might provide invaluable experience.
-\subsection{Third party libraries \& resources}\label{sec:tpp}
+\subsection{Third Party Libraries \& Resources}\label{sec:tpp}
 Following third party resources were utilised in the project. All of them include an open-source license, allowing unrestricted, free use (fulfilling \textbf{NFR4}):
 \begin{description}
   \item[ethereum/go-ethereum v1.9.10] \cite{ethereum2017official} - official Go implementation of Ethereum blockchain used as a bridge between ETH nodes and any Golang programs, allowing to perform CRUD\footnote{Create, Read, Update, Delete} operations on the blockchain.
@@ -60,13 +60,13 @@ Following third party resources were utilised in the project. All of them includ
     \item[tabulator v4.4.3] \cite{tabulator} - JavaScript library used to create dynamic data tables, which can be asynchronously populated and filtered on the client-side.
 \end{description}
 
-\subsection{Working with MQTT}
+\subsection{Working With MQTT}
 As the project heavily relies on MQTT brokers, we had to look for a solution to simulate this environment on my machine. We had two options, either run the broker locally or use one of the publicly available test brokers.
 \subsubsection{Online Broker}
 Both HiveMQ\footnote{https://www.hivemq.com/} and Mosquitto\footnote{https://test.mosquitto.org/} provide free, publicly available brokers capable of both TLS and plain TCP connections. Connecting FlyTrap to a live, online broker helped me test how the system would behave in a situation where FlyTrap and the broker are not located on the same machine and whether inter-network proxy works fine.
 \subsubsection{Local Broker}
 For maximised performance, local broker should be used, to minimise the latency of TCP/TLS connections. For that, we have used Mosquitto 1.6.9\footnote{https://mosquitto.org/blog/2020/02/version-1-6-9-released/}. It is also possible to generate a new set of certificates and RSA public/private key pair for TLS connections\footnote{through `openssl' utility}.  
-\subsection{Working with Blockchain}
+\subsection{Working With Blockchain}
 Ethereum was to be used as a data layer for the application. Of course, testing on the public chain was unfeasible, due to the tremendous costs involved. Fortunately, Ethereum provides an easy way to start your own network, which would behave identically as the real one (including fake credits to use) - in the end, it would be indistinguishable from the real node for the applications attempting communication. When working on the project, We considered two ways of replicating blockchain and in the end, made sure to test FlyTrap in both approaches:
 \subsubsection{Ganache}
 Ganache\cite{lee2019testing} is a framework designed for emulating Ethereum environment. It can be thought as a sandbox environment, where you can generate any required number of dummy accounts, preloaded with currency, which then can be used to transact with each other - all running on localhost, without the need of configuring a proper blockchain network. Extra blocks are mined automatically - as needed. It is also possible to dump the workspace into a file and check into version control.

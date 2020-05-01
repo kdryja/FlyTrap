@@ -8,7 +8,7 @@ To bring the whole framework up, three elements will be needed:
   \item Blockchain Node - either a dummy one provided by Ganache or a live node started through Geth. Remote nodes are also accepted.
   \item MQTT Broker - either a local broker (e.g. mosquitto on Ubuntu) or an online broker, reachable via TCP/TLS (e.g. test.mosquitto.org)
 \end{itemize}
-\section{Compiling source code}
+\section{Compiling Source Code}
 Project consists of 4 binaries, which can be compiled as follows. Each `go build foo.bar' operation will produce a binary named `bar', which then can be executed by running \$ ./bar. To specify exact name of the produced binary, an extra -o flag can be provided. Note, compilation is optional and all sourcecode can be also interpreted by the runtime, this can be achieved by replacing `go build' with `go run'.
 
 See below on how to compile binaries for each of the modules:
@@ -22,7 +22,7 @@ $ go build -o mqttclient mqttclient/client.go
 # compile webapp. note, 'templates' folder has to be adjacent to the produced binary when it is executed 
 $ go build -o webapp webapp/main.go 
 \end{lstlisting}
-\section{Project file tree}
+\section{Project File Tree}
 \begin{forest}
   for tree={font=\sffamily, grow'=0,
   folder indent=.9em, folder icons,
@@ -56,26 +56,26 @@ $ go build -o webapp webapp/main.go
     [evaluation]
   ]
 \end{forest}
-\section{Files overview}
+\section{Files Overview}
 Files that can be compiled and are considered main entry point for the given component are marked with an asterisk (\textbf{*})
-\subsection{blockchain}
+\subsection{Blockchain}
 This module contains code responsible for communicating with blockchain.
 \paragraph{blockchain.go} contains all logic related to making calls to Blockchain to retrieve or write data. It's referenced by FlyTrap when checking access permissions.
 \paragraph{cmd/blockchain/main.go *} main executable and CLI when communicating with blockchain. Executing this file. 
 \paragraph{flytrap.sol} smart contract definition written in Solidity.
 \paragraph{flytrap.go} Solidity code translated into Golang, which then can be used to make calls towards blockchain.
 \paragraph{logging.go} logic to query state of blockchain in order to pull logs to be used in web frontend.
-\subsection{flytrap}
+\subsection{Flytrap}
 This module contains the main logic behind FlyTrap proxy. 
 \paragraph{cmd/flytrap/main.go *} main executable of FlyTrap proxy.
 \paragraph{summary.go} code containing logic to cache publishers/subscribers and dump them periodically as a transaction to blockchain.
 \paragraph{verification.go} logic to query the GeoLite2 database in order to translate IP into a country that it is located in.
 \paragraph{GeoLite2-Country.mmdb} MaxMind database file used to lookup IP addresses.
-\subsection{mqttclient}
+\subsection{MQTT Client}
 \paragraph{client.go *} simple MQTT client used to PUBLISH/SUBSCRIBE to MQTT Brokers, enhanced with extra functionality needed by FlyTrap calculating and attaching signature to CONNECT packets.
-\subsection{webapp}
+\subsection{Webapp}
 This module is used to start up a frontend instance for FlyTrap allowing inspecting of data stored on blockchain.
 \paragraph{templates} HTML + JS files used to render the website.
 \paragraph{main.go *} backend used to handle incoming requests and query blockchain, returning information filling the website.
-\subsection{evaluation}
+\subsection{Evaluation}
 This folder contains dump of all tests results performed for the purposes of evaluation.
