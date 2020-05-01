@@ -15,7 +15,7 @@ Figure \ref{fig:flytrap} presents an overview of the system, decomposing it into
 The four layers are as follows:
 \begin{description}
     \item[Consumer Layer] - Responsible for interacting with end-devices. To them, FlyTrap should be indistinguishable from a normal MQTT broker and thus accepts/responds with MQTT v5.0 compliant TCP/TLS packets. 
-    \item[Consumer Layer] - Here FlyTrap acts like a client for the MQTT Broker. Similar to the Consumer Layer, all packets sent by FlyTrap need to be compliant with the MQTT standard in order to receive valid responses from the broker. In this situation, the utilised broker is not relevant - as long as it implements the standard and responds with standarised MQTT packets.
+    \item[Broker Layer] - Here FlyTrap acts like a client for the MQTT Broker. Similar to the Consumer Layer, all packets sent by FlyTrap need to be compliant with the MQTT standard in order to receive valid responses from the broker. In this situation, the utilised broker is not relevant - as long as it implements the standard and responds with standarised MQTT packets.
     \item[Blockchain Layer] - Here FlyTrap performs communication with the Ethereum node through a separate CLI. FlyTrap is capable of either reading past contracts/transactions or submitting new ones. This also provides an opportunity to amend the state of the blockchain (such as access control lists) - given the private master key has remained secret.
     \item[Presentation Layer] - Used by FlyTrap's end-users to access an overview of the state of the blockchain in a user-friendly way, easily extracting most relevant information such as reports from sensistive topics or audit trail for major operations on the chain.
 \end{description}
