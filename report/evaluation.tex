@@ -1,24 +1,24 @@
 \chapter{Evaluation}\label{chap:evaluation}
-FlyTrap imposes an overhead to vanilla MQTT brokers. It is vital to ensure that added layer of security does not severely impact the operation of the broker, as MQTT is a time-sensitive protocol, requiring frequent and rapid responses. In this chapter, we present experiments to measure latency caused by FlyTrap, operation cost on a public blockchain and reflect back to user stories to ensure that FlyTrap fulfils the specified needs. In the end, we reflect on the findings and answer the stated research questions, determining the feasibility of the project in the real world.
+FlyTrap imposes an overhead to vanilla MQTT brokers. It is vital to ensure that the added layer of authentication does not severely impact the operation of the broker, as MQTT is a time-sensitive protocol, requiring frequent and rapid responses. In this chapter, we present experiments to measure latency caused by FlyTrap, the operational cost on a public blockchain and also reflect back to user stories to ensure that FlyTrap fulfils the specified needs. In the end, we reflect on the findings and answer the stated research questions, determining the feasibility of the solution in the real world.
 
-\section{Experimental design}
-This section includes details on how the experiments were designed and what the main motivations behind each of them were, along with the description of hardware \& software used, to ensure reproducibility.
-\subsection{Research question(s)}
-We are looking at evaluating four separate aspects of the implementation and thus can form four research questions, which each of the subsequent sections attempts to answer:
+\section{Experimental Design}
+This section includes details on how the experiments were designed and what the main motivations behind each of them were, along with a description of the hardware and the software used, to ensure reproducibility.
+\subsection{Research Question(s)}
+Four separate aspects of the implementation were investigated and these can be summarised with the following research questions, which each of the subsequent section attempts to answer:
 \begin{enumerate}
   \item How significant is the performance hit by proxying the connection through FlyTrap, as opposed to directly connecting to the broker (further referred to as state-of-the-art)?
   \item How does FlyTrap scale as the number of concurrent requests goes up?
-  \item How expensive would the operation of FlyTrap be on Proof-of-Stake type of blockchain network?
-  \item How does FlyTrap address the problems stated by use-case scenarios in Section \ref{sec:usecase}?
+  \item How expensive would the operation of FlyTrap be on a Proof-of-Work type of blockchain network?
+  \item How does FlyTrap address the problems highlighted by the use-case scenarios in Section~\ref{sec:usecase}?
 \end{enumerate}
 \subsection{Experiments}
 Each of the questions specified above has its own designated test.
 
-\subsubsection{Latency Evaluation} To test the performance impact, we run the same MQTT client that was written for the purposes of this project. For the first test pointing at the MQTT broker and in the other pointing at FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, we measure the time taken between sending the initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurement is taken, FlyTrap is restarted and thus erases all in-memory cache. For the fourth measurement, FlyTrap is not restarted (further referred as ``Flytrap-Cached'') to take into account performance gains caused by caching. Everything is also repeated with TLS both enabled and disabled to measure the impact of having to encrypt/decrypt TLS packets twice.
+\subsubsection{Latency Evaluation} Performance impact was assessed using the same MQTT client that was written for the purposes of this project. For the first test making the requests against the MQTT broker and in the other against FlyTrap, which would then proxy the connection (granted access is allowed) to the broker. To capture exact response time, the experiment measured the time taken between sending the initial CONNECT/SUBSCRIBE/PUBLISH packet until a relevant *ACK response is received. Every time a new measurement is taken, FlyTrap was restarted thus erasing all in-memory cache. In the last measurement, FlyTrap is not restarted (referred to as ``Flytrap-Cached'') to take into account performance gains caused by caching. Everything is also repeated with TLS both enabled and disabled to measure the impact of having to encrypt/decrypt TLS packets twice.
 \subsubsection{Scalability Evaluation}
-Latency evaluation would not be sufficient on its own to confirm FlyTrap's usability. It could be the case that singular client publishing messages is handled almost with no time loss, but as the number of clients increases (it is common for MQTT brokers to handle lot of clients at once), the response time might be growing exponentially and thus software might being unusable for commercial purposes. 
+A latency evaluation alone would not be sufficient to confirm FlyTrap's usability. It could be the case that a single client publishing messages is handled almost with no time loss, but as the number of clients increases (it is common for MQTT brokers to handle lot of clients at once), the response time might be growing exponentially and thus the software might being unusable for commercial purposes. 
 
-Adding onto latency evaluation, we also look at how FlyTrap performs with many simultaneous connections. 10/100/1000/10000 clients (where the number of concurrent clients is the experiment's independent variable and average response time is the dependent variable) sending a single PUBLISH packet (with the same size for every client) are initiated and their response times captured. Then response time for each test is averaged and placed on a chart to determine the growth speed.  
+In addition to the latency evaluation, it is important to examine how FlyTrap performs with many simultaneous connections. 10/100/1000/10000 clients (where the number of concurrent clients is the experiment's independent variable and average response time is the dependent variable) sending a single PUBLISH packet (with the same size for every client) are initiated and their response times captured. Then response time for each test is averaged and placed on a chart to determine the growth speed.  
 \subsubsection{Cost Evaluation}
 To test the cost, the Ganache testing network is used, as it accurately simulates real Ethereum networks. Different operations performed by FlyTrap are considered as independent variables:
 \begin{enumerate}
@@ -29,12 +29,12 @@ To test the cost, the Ganache testing network is used, as it accurately simulate
 \end{enumerate}
 As the gas cost can vary, each of those operations was executed 100 times saving their cost in Gas (as reported by Ganache), every time using a fresh blockchain instance. Then, those prices (which would be the dependent variable) were averaged and translated into USD for a clearer overview.
 \subsubsection{Scenarios Evaluation}
-Finally, to test the satisfaction of the requirements, scenarios described in chapter 3 of this dissertation were used. A walk-through of the process was included to pinpoint the benefits provided by the produced software and show how the problem presented by the use-case has been addressed.
+Finally, to test the satisfaction of the requirements, scenarios described in Chapter 3 of this dissertation were used. A walk-through of the FlyTrap's operation was included to pinpoint the benefits provided by the produced software and to illustrate how the problem presented by the use-case has been addressed.
 
-\subsection{Testing environment}
+\subsection{Testing Environment}
 Tests were performed on the University-provided hardware, with the specs as below:
 \subsubsection{Hardware}
-For tests, virtual machine provided by the University has been used. Throughout the test, the current activity on the machine was monitored through the `top' utility to ensure that no other program might influence the response times. Additionally, to avoid potential slowdowns with caching, each test had 5 warm-up requests, which were discarded from the evaluation, followed by 100 experimental measurements.
+A virtual machine provided by the University has been used. Throughout the tests, the current activity on the machine was monitored through the `top' utility to ensure that no other program might influence the response times. Additionally, to avoid potential slowdowns with caching, each test had 5 warm-up requests, which were discarded from the evaluation, followed by 100 experimental measurements.
 
 Table \ref{tab:hw} shows full specification of the hardware used for running the tests:
 \begin{table}[h]
@@ -49,11 +49,11 @@ Cores              & 4                                \\ \hline
 L3 Cache           & 15 MB                            \\ \hline
 RAM                & 70 GB                            \\ \hline
 \end{tabular}
-\caption{Hardware of the testing environment}
+\caption{Hardware of the testing environment.}
 \label{tab:hw}
 \end{table}
 \subsubsection{Software}
-As network latency can be unpredictable and varied, all required software and frameworks have been locally installed on the machine, with FlyTrap communicating via local TCP ports. This also includes local instances for both MQTT broker and Ethereum node. For TLS encryption, self-signed certificate was also created and provided for FlyTrap. In Table \ref{tab:sw} you can find a list of specific software used for tests:
+As network latency can be unpredictable and varied, all required software and frameworks were installed locally on the machine, with FlyTrap communicating via local TCP ports. This also included local instances for both MQTT broker and Ethereum node. For TLS encryption, a self-signed certificate was also created and provided for FlyTrap. Table \ref{tab:sw} presents a list of specific software used for tests:
 
 \begin{table}[h]
 \centering
@@ -64,27 +64,27 @@ Blockchain        & Local instance of Geth 1.9.13 running blockchain with Proof-
 Golang            & Golang 1.13                                                              \\ \hline
 MQTT Broker       & Local instance of Mosquitto 1.6.9                                        \\ \hline
 \end{tabular}
-\caption{Software of the testing environment}
+\caption{Software of the testing environment.}
 \label{tab:sw}
 \end{table}
 
 All source code from the project was compiled into binaries before execution to reduce potential noise further.
 
 \section{Latency Evaluation}
-For this test, we are looking at comparing FlyTrap's performance against state-of-the-art, which in this situation would be plain MQTT Broker offering authentication through username/password. This test provides two separate sets of results, each executed on a connection with either TLS enabled or disabled.
+This test, compared FlyTrap's performance against the state-of-the-art, which in this situation was a be plain MQTT Broker offering authentication through username/password. Each test was executed on a connection with either TLS enabled or disabled.
 
-Furthermore, as mentioned above, each packet was submitted 105 times, discarding the first 5 results. Then for each scenario, the average is calculated and placed on a bar chart. Additionally, to ensure statistical significance, a two-tailed t-test has been performed on CONNECT tests to extract p-value. For SUBSCRIBE/PUBLISH - as we are dealing with three data groups - Kruskal-Wallis Test (since data is not of a Gaussian distribution, thus cannot use One-Way ANOVA Test) has been used to determine whether the null hypothesis can be rejected.
+Furthermore, as mentioned above, each packet was submitted 105 times, discarding the first 5 results. Then for each scenario, the average was calculated and placed on a bar chart. Additionally, to ensure statistical significance, a two-tailed t-test was performed on CONNECT tests to extract the p-value. For SUBSCRIBE/PUBLISH - as we are dealing with three data groups - Kruskal-Wallis Test (since data is not of a Gaussian distribution, thus cannot use One-Way ANOVA Test) was used to determine whether the null hypothesis could be rejected.
 
-Note: as no caching occurs during CONNECT stage, ``FlyTrap - Cached'' has been omitted, as it produces the same results as regular `FlyTrap'
+Note: As no caching occurs during the CONNECT stage, ``FlyTrap - Cached'' has been omitted, as it produces the same results as regular `FlyTrap'
 
 \subsection{With TLS}\label{sec:tls_eval}
-Figure \ref{fig:latency_tls} shows the average response time for each of the packets. Standard error has been omitted from the representation, as for each of the scenarios, it was found to be less than $0.1\%$. When sending the request through FlyTrap, we can notice an increase in response time of $53.73\%/61.92\%/62.67\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets.
+Figure \ref{fig:latency_tls} shows the average response time for each of the packets. Standard error has been omitted from the representation, as for each of the scenarios, it was found to be less than $0.1\%$. When sending the request through FlyTrap, an increase in response time is observed of $53.73\%/61.92\%/62.67\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets.
 
-For FlyTrap - Cached, when compared with Vanilla, this increase is significantly less prominent, showing an increase of $18.12\%/22.19\%$ respectively for SUBSCRIBE/PUBLISH packets. 
+For FlyTrap - Cached, when compared with the vanilla broker, this increase is significantly less prominent, showing an increase of $18.12\%/22.19\%$ respectively for SUBSCRIBE/PUBLISH packets. 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{latency_tls}
-    \caption{Response times of most common MQTT requests connection with SSL/TLS encryption}
+    \caption{Response times of most common MQTT requests via a connection with SSL/TLS encryption.}
     \label{fig:latency_tls}
 \end{figure}
 
@@ -99,22 +99,23 @@ Statistical tests have been performed on all three datasets. Each of the 100 res
 2           & SUBSCRIBE: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 3           & PUBLISH: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
-\caption{Outcome of statistical tests on each the MQTT packets considered for TLS-encrypted connection}
+\caption{Outcome of statistical tests on each of the MQTT packets considered for TLS-encrypted connection.}
 \label{tab:ttest-tls}
 \end{table}
+
 \subsection{Plain TCP}
+The test above was repeated, this time disabling TLS encryption for both ends of the connection. The first thing that we can notice is the overall decrease in response times when compared with the TLS connection. This is a clear indicator that TLS does indeed add an overhead to standard TCP connections. Experiment results were placed on a bar chart similarly as before. Again, standard error bars were omitted, as they were found to be less than $0.1\%$.
 
-Test above has been repeated, this time disabling TLS encryption for both ends of the connection. The first thing that we can notice is the overall decrease in response times when compared with the TLS connection. This is a clear indicator that TLS indeed adds an overhead to standard TCP connections. Experiment results were placed on a bar chart similarly as before. Again, standard error bars were omitted, as they were found to be less than $0.1\%$.
+Figure \ref{fig:latency_notls} shows the average response time for each of the packets. When sending the request through FlyTrap, we notice an increase in response time of $18.13\%/43.30\%/31.58\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets. For FlyTrap - Cached, when compared with the vanilla broker, this increase was less prominent, showing an increase of $23.41\%/15.55\%$ respectively for SUBSCRIBE/PUBLISH packets. 
 
-Figure \ref{fig:latency_notls} shows the average response time for each of the packets. When sending the request through FlyTrap, we notice an increase in response time of $18.13\%/43.30\%/31.58\%$ respectively for CONNECT/SUBSCRIBE/PUBLISH packets. For FlyTrap - Cached, when compared with Vanilla, this increase less prominent, showing an increase of $23.41\%/15.55\%$ respectively for SUBSCRIBE/PUBLISH packets. 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{latency_notls}
-    \caption{Response times of most common MQTT requests on plain TCP connection}
+    \caption{Response times of most common MQTT requests via a plain TCP connection.}
     \label{fig:latency_notls}
 \end{figure}
 
-In order to deem the results statistically significant, we performed identical tests as in TLS-focused experiment. For each of the tests, the \textit{p-value} was found to be $<0.05$, thus allowing me to reject the null hypotheses. Table\ \ref{tab:ttest-notls} shows the specific values of performed statistical tests.
+For each of the tests, the \textit{p-value} was found to be $<0.05$, allowing the null hypotheses to be rejected. Table\ \ref{tab:ttest-notls} shows the values of the performed statistical tests.
 
 \begin{table}[h]
 \centering
@@ -125,61 +126,61 @@ In order to deem the results statistically significant, we performed identical t
 2           & SUBSCRIBE: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 3           & PUBLISH: Vanilla vs FlyTrap vs Cached & Kruskal-Wallis          & $<<< 0.001$ \\ \hline
 \end{tabular}
-\caption{Outcome of statistical tests on each the MQTT packets considered on a plain TCP connection}
+\caption{Outcome of statistical tests on each the MQTT packets considered via a plain TCP connection.}
 \label{tab:ttest-notls}
 \end{table}
 
 
 \section{Scalability Evaluation}
-In this test, 10/100/1000/10000 concurrent clients were dispatched to PUBLISH a single message, with identical size across all tests, through FlyTrap with TLS enabled. Every client was dispatched at the same time, as a separate process, thus ensuring that they did not interfere with each other. Each was identifying with a different Public Key, forcing FlyTrap to perform authentication flow. Then the time when PUBACK had been received was captured and saved.
+In this test, 10/100/1000/10000 concurrent clients were dispatched to PUBLISH a single message, with identical size across all tests, through FlyTrap with TLS enabled. Every client was dispatched at the same time, as a separate process, thus ensuring that they did not interfere with each other. Each identified with a different Public Key, forcing FlyTrap to perform authentication flow. Then the time when PUBACK was received was captured and saved.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{scale}
-    \caption{Average response times with regards to number of concurrent clients}
+    \caption{Average response times with regards to number of concurrent clients.}
     \label{fig:scale}
 \end{figure}
-See Figure \ref{fig:scale} with the outcome. Similar as with previous tests, standard error has been omitted, as it was less than $0.1\%$. We can see that the response time remains constant across a different number of concurrent clients, with less than $1\%$ change between tests.
+See Figure \ref{fig:scale} with the outcome. As with previous tests, standard error has been omitted, as it was less than $0.1\%$. We can see that the response time remains constant across a different number of concurrent clients, with less than $1\%$ change between tests.
 
 \section{Cost Evaluation}
-As mentioned, Proof-of-Authority networks do not have any currency involved, and thus there is no reward for mining. However, this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments and it is essential to keep this cost to the minimum.
+As discussed in Section \ref{sec:poa}, Proof-of-Authority networks do not have any currency involved, and thus there is no reward for mining. However, this removes the benefits of transparency and publicity of the data. On the other hand, running it on a public network (a.k.a. Proof-of-Stake), where miners compete to add new blocks to the network, involves fees and payments and it is essential to keep this cost to the minimum.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{cost}
-    \caption{Cost comparison of various operations on blockchain}
+    \caption{Cost comparison of various operations on blockchain.}
     \label{fig:cost}
 \end{figure}
 
-Six operations performed by FlyTrap were executed a hundred times to extract the average costs in gas. To put those numbers into perspective, the equivalent value in USD was also included - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}
+Six operations performed by FlyTrap were executed a hundred times to extract the average costs in gas. To put those numbers into perspective, the equivalent value in USD was also included - assuming relations of 1 ETH = \$182.29 and 1 Gas = 0.0000000054 ETH\footnote{Data from https://ethgasstation.info/ and https://cex.io/eth-usd as of 2020-04-18}.
+
+Figure~\ref{fig:cost} shows the cost in Gas and in USD for each of the six operations. A maximum charge of \$2.03 and a minimum of \$0.02 is noticed. However, it is important to point out that contract creation occurs only once, when setting up the system. As it allocates memory space on the network for FlyTrap, it is the most expensive operation. All subsequent actions that are modifying its state are priced at below \$0.10.
 
 
 \section{Scenarios Evaluation}
-In the last test for the evaluation, we are be looking at verifying whether the produced software addresses the problems stated by the Use-case Scenarios in Chapter 3. This focuses mostly on a walk-through of each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the relevant scenario.
-
-Scenario \#5 has been omitted, as the security aspect is be apparent throughout the remaining tests.
+The last part of the evaluation, examines whether the produced software addresses the problems stated by the Use-case Scenarios in Chapter 3. This focuses mostly on a walk-through of each of the scenarios, demonstrating how the implemented features satisfy the business need defined in the relevant scenario. Scenario \#5 has been omitted, as the security aspect is be apparent throughout the remaining tests.
 \subsection{Setup}
-Each of those scenarios share common setup steps, which sets up the initial network and proxy. We are going to walk through those steps here - which then can be assumed to be executed prior to any of the subsequent scenarios.
-\paragraph{Step 1} - configure your blockchain. For the sake of this experiment, we are going to use Ganache, which starts a test network, with accounts that have 100 ETH pre-filled currency. Once started, you should obtain a window similar to Figure \ref{fig:ganache}.
-\paragraph{Step 2} - set endpoint for your blockchain node (Ganache default) and create a new contract for FlyTrap.
+Each scenario shares same number of common setup steps, which sets up the initial network and proxy. Those steps will be summarised here - and can be assumed to be executed prior to any of the subsequent scenarios.
+\paragraph{Step 1} - Configure the blockchain. For the sake of this experiment, we use Ganache, which starts a test network, with accounts that have 100 ETH pre-filled currency. Once started, a window similar to Figure~\ref{fig:ganache} appears.
+\paragraph{Step 2} - Set endpoint for the blockchain node (Ganache default) and create a new contract for FlyTrap.
 \begin{lstlisting}[language=bash]
 $ export BLOCKCHAIN_ADDRESS="http://localhost:7545"
 $ go run cmd/blockchain/main.go -new -contract=""
 2020/04/18 20:28:44 Generated new contract, address is:
 0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f
 \end{lstlisting}
-\paragraph{Step 3} - set contract as environmental variable, add new topic and add publishers/subscribers.
+\paragraph{Step 3} - Set contract as environmental variable, add new topic and add publishers/subscribers.
 \begin{lstlisting}[language=bash,breaklines=true]
 $ export BLOCKCHAIN_CLIENT="0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f"
 $ go run cmd/blockchain/main.go -new_topic "creating test topic" -topic "TopicName"
 $ go run cmd/blockchain/main.go -topic "TopicName" -client "<client_pubkey>" -pub "adding test publisher"
 $ go run cmd/blockchain/main.go -topic "TopicName" -client "<client_pubkey>" -sub "adding test subscriber"
 \end{lstlisting}
-\paragraph{Step 4} - start web server. Now you should be able to access the website under localhost:8081.
+\paragraph{Step 4} - Start web server. The can now be accessed website under localhost:8081.
 \begin{lstlisting}[language=bash,breaklines=true]
 $ go run webapp/main.go
 \end{lstlisting}
-\paragraph{Step 5} - finally, we are ready to start our FlyTrap proxy. The command assumes TLS as default, with summary reports generated every hour, connection to test mosquitto broker and starts accepting connections under port 8888.
+\paragraph{Step 5} - Finally, ready to start the FlyTrap proxy. The command assumes TLS as default, with summary reports generated every hour, connection to test mosquitto broker and starts accepting connections under port 8888.
 \begin{lstlisting}[language=bash,breaklines=true]
 $ go run cmd/flytrap/main.go -b-freq=1h
 2020/04/18 21:04:15 Now accepting connections under :8888
