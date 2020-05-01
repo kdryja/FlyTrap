@@ -186,7 +186,9 @@ $ go run cmd/flytrap/main.go -b-freq=1h
 2020/04/18 21:04:15 Now accepting connections under :8888
 \end{lstlisting}
 \subsection{Scenario \#1}
-For this scenario, we are looking to restrict access to a specific topic, only to people connecting from country which has been permitted. To do so, we need to slightly modify step 2 from the setup process adding an extra `country' flag to the command, as follows:
+To recap, the first scenario outlined the need for guarding the access to the data from people outside given jurisdiction, for example, only people within the UK should have access to some designated data, so the access can be governed and regulated to ensure compliance with the law.
+
+In this scenario, we are looking to restrict access to a specific topic, only to people connecting from a country which has been permitted. To do so, we need to slightly modify step 2 from the setup process adding an extra `country' flag to the command, as follows:
 \begin{lstlisting}[language=bash,breaklines=true]
 $ export BLOCKCHAIN_CLIENT="0xD0BaD0f1fC6D627E1e6fcE6020De9BbA2507498f"
 $ go run cmd/blockchain/main.go -new_topic "creating test topic" -topic "RestrictedTopic" -country="GB"
@@ -198,40 +200,49 @@ $ go run client.go -pub=20 -tls=false -priv="privkey1.asc"
 2020/04/18 21:04:17 Publishing message: Here Be Dragons #0
 panic: error publishing: The PUBLISH is not authorized.
 \end{lstlisting}
+This shows how FlyTrap satisfies the need specified by the Scenario \#1 and meets requirement FR8. Normally, the access the broker would have been allowed, but in this case, FlyTrap captures request coming from outside the UK and blocks the access.
 \subsection{Scenario \#2}
 This scenario requires us to determine who accessed the requested resource on the specific day, so we can determine the scope of the leak. Once the steps in the setup have been completed (in particular, the `freq' option) and the leak happens, we are ready to inspect the website.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{scenario2}
-    \caption{Sensitive topics report}
+    \caption{FlyTrap sensitive topics report.}
     \label{fig:scenario2}
 \end{figure}
-Figure \ref{fig:scenario2} shows how the website would look like upon inspecting the access summaries. We can see that on April 18th in the evening, the topic `MyTopic1' was accessed by a single person with the shown public key. Now, we can trace the leakage down to a single person and verify whether their credentials were compromised to assess the damages further.
+
+Figure \ref{fig:scenario2} shows how the website would look upon inspecting the access summaries. We can see that on April 18th in the evening, the topic `MyTopic1' was accessed by a single person with the shown public key. Now, we can trace the leakage down to a single person and verify whether their credentials were compromised to assess the damage further.
+
+This then would allow the business affected by the leakage to provide authorities with the list of users that might have been responsible for the unauthorised data access, satisfing requirements stated by General Data Protection Regulation and FR7 specified in Section \ref{sec:func}.
+
 \subsection{Scenario \#3}
-Here we are just looking at verifying who can access a particular resource, as we want to ensure that all systems that could have read relevant data have been wiped. Again, after following setup steps, we can go ahead and inspect the ``Topic/Person'' part of the web app, which would allow us to see a list of public keys that can access given topic, as per Figure \ref{fig:scenario3}. Then, the system administrator would be able to correlate the public key with the piece of infrastructure accessing the information and ensure that the access is revoked followed-up with data cleanup.
+Here we are looking to verify who can access a particular resource, the difference from Scenario \#2 is that we are looking at resources that are capable of accessing the data (that not necessariliy made use of those capabilities). This can be then used to track the particular servers\footnote{Which each would have their own public/private key pair allocated.} and ensure that all existing data (now requested to be erased) is actually erased.
+
+Again, after following setup steps, we can go ahead and inspect the ``Topic/Person'' part of the web app, which would allow us to see a list of public keys that can access given the topic, as per Figure \ref{fig:scenario3}. Then, the system administrator would be able to correlate the public key with the piece of infrastructure accessing the information and ensure that the access is revoked followed-up with data cleanup (which is covered by FlyTrap, as it is possible that some other unrelated services might have accessed the information).
+
+In the end, this helps us to ensure compliance with GDPR, to be exact, ``Right to be forgotten''. Normally, those servers might be distributed across the network and since MQTT Brokers do not save access logs, finding them might be challenging. This also proves how FR7 is satisfied.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{scenario3}
-    \caption{Current Access Control List summary}
+    \caption{Current Access Control List Summary.}
     \label{fig:scenario3}
 \end{figure}
 \section{Results}
 \subsection{Latency Evaluation}
-The overhead added by FlyTrap is apparent, reaching even an extra 0.05ms per request. Though, it is interesting to see - looking at ``FlyTrap - Cached'' bar - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order to minimise the impact for clients often connecting to the broker. As expected, we also note longer response time for FlyTrap with TLS enabled. This is most probably caused by the fact that now there need to be two separate TLS sessions established, encrypting/decrypting the data twice.
+The overhead added by FlyTrap is apparent, reaching an extra 0.05ms per request. Though, it is interesting to see - looking at the ``FlyTrap - Cached'' bar in Figure \ref{fig:latency_tls} \& \ref{fig:latency_notls} - that caching remediates this problem almost completely, reducing the average response time by up to 37\%, negating the overhead introduced by the first request. We can conclude that FlyTrap would be the most efficient for situations where it is not restarted very often, allowing the cache to grow and in order to minimise the impact for clients often connecting to the broker. As expected, we also note longer response times for FlyTrap with TLS enabled. This is most probably caused by the fact that there needs to be two separate TLS sessions established, encrypting/decrypting the data twice.
 
-For FlyTrap with enabled caching functionality, we can notice an average increase of 0.009ms across both plain TCP and TLS when compared with vanilla broker. This is significantly less than specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement and concludes the first research question.
+For FlyTrap with enabled caching functionality, we notice an average increase of 0.009ms across both plain TCP and TLS when compared with a vanilla broker. This is significantly less than the specified 500ms in \textbf{NFR1} and thus meets this non-functional requirement and concludes the first research question: FlyTrap imposes an avarege of extra 20\% overhead (0.03ms) per rerquest, when compared with the vanilla broker.
 
-It is also interesting to see that the increased latency is much bigger in TLS connections when compared to TCP. With TLS, not only do we have to deal with an extra overhead of having to contact blockchain to read authentication data, but also perform TLS encryption/decryption twice - the first time when communicating with the client and the second time when communicating with the broker.
+It is also interesting to see that the increased latency is much larger in TLS connections when compared to TCP. With TLS, not only do we have to deal with an extra overhead of having to contact blockchain to read authentication data, but also perform TLS encryption/decryption twice - the first time when communicating with the client and the second time when communicating with the broker.
 \subsection{Scalability Evaluation}
-On the tested machine, the response times remained constant, indicating that the proxy is capable of handling many concurrent clients without significant impact on performance. If desired, multiple FlyTrap instances can also be deployed across many machines - each pointing to the same broker, further enhancing the response times. This concludes the second research question.
+On the machine used for testing the response times remained constant, indicating that the proxy is capable of handling many concurrent clients without significant impact on performance. If desired, multiple FlyTrap instances can also be deployed across many machines - each pointing to the same broker, further enhancing the response times. This concludes the second research question: FlyTrap scales in a constant time, up to 10000 concurrent clients, with no impact on response times.
 
-It is important to note that FlyTrap has an overall limit of maximum allowed concurrent connections of 65535 (equal to $2^{16}$) - two limitations enforce this. First, MQTT Protocol can only accept Client IDs of at most $2^{16}$ characters long, so naturally, it is not able to proxy more connections than that, since Broker would refuse them. Secondly, FlyTrap operates on Linux TCP ports. Meaning, allowed port range only goes up to 65535. Where the latter problem could be fixed with WebSockets (discussed in the next chapter), the former would remain a limitation.
+It is important to note that FlyTrap has an overall limit of the maximum allowed concurrent connections of 65535 (equal to $2^{16}$). Two limitations enforce this: first, MQTT Protocol can only accept client IDs of at most $2^{16}$ characters long, so naturally, it is not able to proxy more connections than that, since the broker would refuse them; second, FlyTrap operates on Linux TCP ports, with an allowed port range up to 65535. Where the latter problem could be fixed with WebSockets (discussed in the next chapter), the former would remain a limitation.
 \subsection{Cost Evaluation}
-For the cost evaluation, the most expensive operation would be the creation of the new contract, coming down to \$2.03. The contract contains the bare-bones definition of structures used by FlyTrap, so high price was to be expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would also be performed more often), have their prices much lower. A company looking to create 10 topics with 100 publishers would be looking at an investment of $10 * \$0.11 + 100 * \$0.05 = \$6.1$. This scales linearly, and cost remains the same, regardless of the current size of the contract and amount of pre-existing topics/publishers/subscribers.
+For the cost evaluation, the most expensive operation would be the creation of the new contract, coming down to \$2.03. The contract contains the bare-bones definition of structures used by FlyTrap, so high price was to be expected. Though, this only needs to be performed once - the contract can be reused for as many topics as it is necessary. The remaining operations (which would also be performed more often), have much lower prices. A company looking to create 10 topics with 100 publishers would be looking at an investment of $\$2.03 + 10 * \$0.11 + 100 * \$0.05 = \$8.13$. This scales linearly, and cost remains the same, regardless of the current size of the contract and amount of pre-existing topics/publishers/subscribers.
 
-Blockchain offers a solution with 100\% uptime - and at the same time allowing for potential monetisation of accessing the data. The average cost is significantly higher, when compared to centralised solutions, such as SQL server hosted in the cloud - but it lacks the benefits of a distributed ledger. Ultimately, all pros and cons would need to be considered before deciding to utilise Ethereum as a data layer. This concludes the third research question.
+Blockchain offers a solution with 100\% uptime - and at the same time allowing for potential monetisation data access. The average cost is significantly higher, when compared to centralised solutions, such as SQL server hosted in the cloud - but it lacks the benefits of a distributed ledger. Ultimately, all pros and cons would need to be considered before deciding to utilise Ethereum as a data layer. This concludes the third research question: FlyTrap imposes a one-off network fee of \$2.03 with the subsequent operations costing between \$0.11 and \$0.02, which need to be performed at most ten times a day.
 \subsection{Scenario Evaluation}
-By walking through each of the scenarios, we were able to prove that the software fulfils the business needs specified in Section \ref{sec:usecase}, answering the fourth research question. The use-case of Scenarios \#4 has been shown to be satisfied through the previous examples, as bare security benefit is considered. For the Scenario \#5, please refer to the User Manual (Appendinx~\ref{cha:manual}) for an explanation on how to set a cost on adding new publishers or subscribers.
+Each of the scenario walkthroughs demonstrated how the software fulfils the business needs specified in Section \ref{sec:usecase}, answering the fourth research question. The use-case of Scenarios \#4 illustrated a need for stronger authentication and was omitted, since the setup phase and Scenarios \#1, \#2 and \#3 already made use of authenticating connecting clients using public/private keypairs, thus fulfilling the requirement. For Scenario \#5, please refer to the User Manual (Appendix~\ref{cha:manual}) for an explanation on how to set a cost on adding new publishers or subscribers.
 
-Furthermore, by demonstrating that FlyTrap satisfies stories \#1, \#2 and \#3, we can also deduct that following requirements have been directly satisfied: FR1, FR2, FR6, FR7, FR8 and the following requirements have been indirectly satisfied: FR3, FR4, FR5. 
+Furthermore, by demonstrating that FlyTrap satisfies Scenarios \#1, \#2 and \#3, we can also deduct that following requirements have been directly satisfied: FR1, FR2, FR6, FR7, FR8 and the following requirements have been indirectly satisfied: FR3, FR4, FR5. 
