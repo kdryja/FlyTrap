@@ -1,7 +1,7 @@
 User Manual
 ===========
 
-This appendix provides instructions on how to bring the proxy up and how
+This README provides instructions on how to bring the proxy up and how
 to operate each of the project’s modules.
 
 Blockchain
