@@ -1,4 +1,4 @@
-User Manual {#cha:manual}
+User Manual
 ===========
 
 This appendix provides instructions on how to bring the proxy up and how
@@ -13,8 +13,8 @@ used, which should be accessible via TCP connection.
 
 To install Ganache, please follow instructions on
 https://www.trufflesuite.com/ganache to download AppImage and execute it
-from command line, like shown in listing [cap:gan]. This should bring up
-interface similar as shown on figure [fig:ganache]. Take note of the top
+from command line, like shown in listing below. This should bring up
+Ganache interface. Take note of the top
 two accounts, we will be using them in further examples.
 
     $ chmod +x ganache-2.3.1-linux-x86_64.AppImage
@@ -190,7 +190,7 @@ perform all functionality offered by FlyTrap.
 Operations described in this section will demonstrate how to manipulate
 and interact with FlyTrap’s smart contract located on Ethereum. Before
 running any of those examples, make sure you have configured your env
-variables as per section [sec:envvars].
+variables.
 
 ##### IMPORTANT
 
@@ -209,7 +209,7 @@ $ go run cmd/blockchain/main.go -new -contract=""
 ```
 
 I **strongly** recommend to save the obtained address in environmental
-variable as per section [sec:envvars].
+variable.
 
 #### Creating a new topic
 
